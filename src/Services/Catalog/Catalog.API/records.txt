@@ -1,0 +1,4 @@
+--目录数据库迁移脚本
+dotnet ef migrations add initial  -c CatalogContext -o Infrastructure/CatalogMigrations
+--一体化事件日志数据库迁移脚本
+dotnet ef migrations add initial  -c IntegrationEventLogEF.IntegrationEventLogContext -o Infrastructure/IntegrationEventMigrations

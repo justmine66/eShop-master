@@ -1,0 +1,13 @@
+﻿{
+  "ConnectionString": "Server=JUSTMINE-PC;Initial Catalog=eShop.Services.CatalogDb;User Id=sa;Password=1",
+  "ExternalCatalogBaseUrl": "http://localhost:5101",
+  "EventBusConnection": "localhost",
+  "Logging": {
+    "IncludeScopes": false,
+    "LogLevel": {
+      "Default": "Debug",
+      "System": "Information",
+      "Microsoft": "Information"
+    }
+  }
+}
