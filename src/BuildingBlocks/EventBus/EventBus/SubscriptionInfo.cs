@@ -25,7 +25,7 @@ namespace EventBus
             public Type HandlerType { get; }
 
             /// <summary>
-            /// 初始化订阅信息
+            /// 初始化订阅信息实例
             /// </summary>
             /// <param name="isDynamic">是否动态</param>
             /// <param name="handlerType">事件类型</param>
@@ -36,20 +36,20 @@ namespace EventBus
             }
 
             /// <summary>
-            /// 获取订阅信息
+            /// 初始化动态订阅信息实例
             /// </summary>
             /// <param name="handlerType">事件类型</param>
-            /// <returns></returns>
+            /// <returns>订阅信息实例</returns>
             public static SubscriptionInfo Dynamic(Type handlerType)
             {
                 return new SubscriptionInfo(true, handlerType);
             }
 
             /// <summary>
-            /// 获取订阅信息
+            /// 初始化类型订阅信息实例
             /// </summary>
             /// <param name="handlerType">事件类型</param>
-            /// <returns></returns>
+            /// <returns>订阅信息实例</returns>
             public static SubscriptionInfo Typed(Type handlerType)
             {
                 return new SubscriptionInfo(false, handlerType);

@@ -18,27 +18,17 @@ namespace EventBus
         bool IsEmpty { get; }
 
         /// <summary>
-        /// 移除事件处理时触发此事件
+        /// 移除事件的触发事件
         /// </summary>
         event EventHandler<string> OnEventRemoved;
 
         /// <summary>
-        /// 动态添加订阅事件
+        /// 添加动态订阅事件
         /// </summary>
         /// <typeparam name="TH">事件处理</typeparam>
         /// <param name="eventName">事件名</param>
         void AddDynamicSubscription<TH>(string eventName)
            where TH : IDynamicIntegrationEventHandler;
-
-        /// <summary>
-        /// 添加事件订阅
-        /// </summary>
-        /// <typeparam name="T">事件</typeparam>
-        /// <typeparam name="TH">事件处理</typeparam>
-        /// <param name="handler"></param>
-        void AddSubscription<T, TH>(Func<TH> handler)
-           where T : IntegrationEvent
-           where TH : IIntegrationEventHandler<T>;
 
         /// <summary>
         /// 移除事件订阅
