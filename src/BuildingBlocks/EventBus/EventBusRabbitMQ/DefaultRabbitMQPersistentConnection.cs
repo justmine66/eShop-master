@@ -18,20 +18,28 @@ namespace EventBusRabbitMQ
     public class DefaultRabbitMQPersistentConnection
         : IRabbitMQPersistentConnection
     {
-        private readonly IConnectionFactory _connectionFactory;
-        private readonly ILogger<DefaultRabbitMQPersistentConnection> _logger;
+        private readonly IConnectionFactory _connectionFactory;//连接工厂
+        private readonly ILogger<DefaultRabbitMQPersistentConnection> _logger;//日志记录器
 
-        IConnection _connection;
-        bool _disposed;
+        IConnection _connection;//连接服务
+        bool _disposed;//是否释放
 
-        object sync_root = new object();
+        object sync_root = new object();//同步根对象
 
+        /// <summary>
+        /// 初始化一个默认的RabbitMQ持久连接器实例
+        /// </summary>
+        /// <param name="connectionFactory">连接工厂</param>
+        /// <param name="logger">日志记录器</param>
         public DefaultRabbitMQPersistentConnection(IConnectionFactory connectionFactory, ILogger<DefaultRabbitMQPersistentConnection> logger)
         {
             _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
+        /// <summary>
+        /// 是否已连接
+        /// </summary>
         public bool IsConnected
         {
             get
@@ -40,6 +48,10 @@ namespace EventBusRabbitMQ
             }
         }
 
+        /// <summary>
+        /// 创建通用AMQP模型
+        /// </summary>
+        /// <returns>AMQP模型</returns>
         public IModel CreateModel()
         {
             if (!IsConnected)
@@ -50,6 +62,9 @@ namespace EventBusRabbitMQ
             return _connection.CreateModel();
         }
 
+        /// <summary>
+        /// 释放
+        /// </summary>
         public void Dispose()
         {
             if (_disposed) return;
@@ -73,9 +88,10 @@ namespace EventBusRabbitMQ
         public bool TryConnect()
         {
             _logger.LogInformation("RabbitMQ Client is trying to connect");
-
+            //建立临界区，锁住临界资源。
             lock (sync_root)
             {
+                //1、初始化重试策略
                 var policy = RetryPolicy.Handle<SocketException>()
                     .Or<BrokerUnreachableException>()
                     .WaitAndRetry(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
@@ -83,14 +99,14 @@ namespace EventBusRabbitMQ
                         _logger.LogWarning(ex.ToString());
                     }
                 );
-
+                //2、根据重试策略，执行创建连接。
                 policy.Execute(() =>
                 {
                     _connection = _connectionFactory
                           .CreateConnection();
                 });
-
-                if (IsConnected)
+                //3、处理连接信息
+                if (IsConnected)//已连接
                 {
                     _connection.ConnectionShutdown += OnConnectionShutdown;
                     _connection.CallbackException += OnCallbackException;
@@ -100,7 +116,7 @@ namespace EventBusRabbitMQ
 
                     return true;
                 }
-                else
+                else//未连接
                 {
                     _logger.LogCritical("FATAL ERROR: RabbitMQ connections could not be created and opened");
 

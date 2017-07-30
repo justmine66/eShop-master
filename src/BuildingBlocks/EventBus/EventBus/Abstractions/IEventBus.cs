@@ -14,7 +14,7 @@ namespace EventBus.Abstractions
     public interface IEventBus
     {
         /// <summary>
-        /// 表示一个事件订阅的方法
+        /// 表示一个订阅事件的方法
         /// </summary>
         /// <typeparam name="T">事件</typeparam>
         /// <typeparam name="TH">事件处理</typeparam>
@@ -23,23 +23,12 @@ namespace EventBus.Abstractions
             where TH : IIntegrationEventHandler<T>;
 
         /// <summary>
-        /// 表示一个动态订阅事件的方法
+        /// 表示一个订阅动态事件的方法
         /// </summary>
         /// <typeparam name="TH">事件处理</typeparam>
         /// <param name="eventName">事件名</param>
         void SubscribeDynamic<TH>(string eventName)
             where TH : IDynamicIntegrationEventHandler;
-
-        /// <summary>
-        /// 摘要：
-        ///     表示一个订阅事件的方法
-        /// </summary>
-        /// <typeparam name="T">事件</typeparam>
-        /// <typeparam name="TH">事件处理</typeparam>
-        /// <param name="handler"></param>
-        void Subscribe<T, TH>(Func<TH> handler)
-            where T : IntegrationEvent
-            where TH : IIntegrationEventHandler<T>;
 
         /// <summary>
         /// 摘要：
@@ -52,7 +41,7 @@ namespace EventBus.Abstractions
             where T : IntegrationEvent;
 
         /// <summary>
-        /// 表示一个动态取消事件订阅的方法
+        /// 表示一个取消动态事件订阅的方法
         /// </summary>
         /// <typeparam name="TH">事件处理</typeparam>
         /// <param name="eventName">事件名</param>

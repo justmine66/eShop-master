@@ -23,6 +23,15 @@ namespace EventBus
         event EventHandler<string> OnEventRemoved;
 
         /// <summary>
+        /// 添加订阅事件
+        /// </summary>
+        /// <typeparam name="T">事件</typeparam>
+        /// <typeparam name="TH">事件处理</typeparam>
+        void AddSubscription<T, TH>()
+           where T : IntegrationEvent
+           where TH : IIntegrationEventHandler<T>;
+
+        /// <summary>
         /// 添加动态订阅事件
         /// </summary>
         /// <typeparam name="TH">事件处理</typeparam>
