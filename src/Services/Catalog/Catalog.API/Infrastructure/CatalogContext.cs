@@ -27,10 +27,6 @@ namespace Catalog.API.Infrastructure
             builder.Entity<CatalogItem>(ConfigureCatalogItem);
         }
 
-        /// <summary>
-        /// 配置目录项表架构
-        /// </summary>
-        /// <param name="builder"></param>
         void ConfigureCatalogItem(EntityTypeBuilder<CatalogItem> builder)
         {
             builder.ToTable("Catalog");
@@ -46,8 +42,10 @@ namespace Catalog.API.Infrastructure
             builder.Property(ci => ci.Price)
                 .IsRequired(true);
 
-            builder.Property(ci => ci.PictureUri)
+            builder.Property(ci => ci.PictureFileName)
                 .IsRequired(false);
+
+            builder.Ignore(ci => ci.PictureUri);
 
             builder.HasOne(ci => ci.CatalogBrand)
                 .WithMany()
@@ -58,10 +56,6 @@ namespace Catalog.API.Infrastructure
                 .HasForeignKey(ci => ci.CatalogTypeId);
         }
 
-        /// <summary>
-        /// 配置目录品牌表架构
-        /// </summary>
-        /// <param name="builder"></param>
         void ConfigureCatalogBrand(EntityTypeBuilder<CatalogBrand> builder)
         {
             builder.ToTable("CatalogBrand");
@@ -77,10 +71,6 @@ namespace Catalog.API.Infrastructure
                 .HasMaxLength(100);
         }
 
-        /// <summary>
-        /// 配置目录类型表架构
-        /// </summary>
-        /// <param name="builder"></param>
         void ConfigureCatalogType(EntityTypeBuilder<CatalogType> builder)
         {
             builder.ToTable("CatalogType");

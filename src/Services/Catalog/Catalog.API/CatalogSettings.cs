@@ -11,12 +11,23 @@ namespace Catalog.API
     public class CatalogSettings
     {
         /// <summary>
-        /// 提供外部访问的目录基地址
-        /// </summary>
-        public string ExternalCatalogBaseUrl { get; set; }
-        /// <summary>
         /// 事件总线连接字符串，一般为消息服务器主机名或IP地址。
         /// </summary>
         public string EventBusConnection { get; set; }
+
+        /// <summary>
+        /// 图片基地址
+        /// </summary>
+        public string PicBaseUrl { get; set; }
+
+        /// <summary>
+        /// 使用自定义数据
+        /// </summary>
+        public bool UseCustomizationData { get; set; }
+
+        /// <summary>
+        /// 启动Azure存储
+        /// </summary>
+        public bool AzureStorageEnabled { get; set; }
     }
 }
