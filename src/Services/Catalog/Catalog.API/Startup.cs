@@ -24,6 +24,10 @@ using RabbitMQ.Client;
 using EventBus;
 using Polly;
 using Catalog.API.IntegrationEvents;
+using Catalog.API.IntegrationEvents.EventHandling;
+using Catalog.API.IntegrationEvents.Events;
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
 
 namespace Catalog.API
 {
@@ -52,7 +56,7 @@ namespace Catalog.API
         public IConfigurationRoot Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
+        public IServiceProvider ConfigureServices(IServiceCollection services)
         {
             services.AddHealthChecks(checks =>
             {
@@ -84,7 +88,8 @@ namespace Catalog.API
                 options.ConfigureWarnings(warnings => warnings.Throw(RelationalEventId.QueryClientEvaluationWarning));
                 //Check Client vs. Server evaluation: https://docs.microsoft.com/en-us/ef/core/querying/client-eval
             });
-            services.AddDbContext<IntegrationEventLogContext>(options=> {
+            services.AddDbContext<IntegrationEventLogContext>(options =>
+            {
                 options.UseSqlServer(Configuration["ConnectionString"],
                                      sqlServerOptionsAction: sqlOptions =>
                                      {
@@ -138,8 +143,11 @@ namespace Catalog.API
                 return new DefaultRabbitMQPersistentConnection(factory, logger);
             });
 
-            services.AddSingleton<IEventBusSubscriptionsManager, InMemoryEventBusSubscriptionsManager>();
-            services.AddSingleton<IEventBus, EventBusRabbitMQ.EventBusRabbitMQ>();
+            RegisterEventBus(services);
+
+            var container = new ContainerBuilder();
+            container.Populate(services);
+            return new AutofacServiceProvider(container.Build());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -159,10 +167,12 @@ namespace Catalog.API
               });
 
             var context = app.ApplicationServices.GetService(typeof(CatalogContext)) as CatalogContext;
-            WaitForSqlAvailabilityAsync(context, loggerFactory, app).Wait();
+            WaitForSqlAvailabilityAsync(context, loggerFactory, app, env).Wait();
+
+            ConfigureEventBus(app);
 
             //Seed Data
-            CatalogContextSeed.SeedAsync(app, loggerFactory).Wait();
+            CatalogContextSeed.SeedAsync(app, env, loggerFactory).Wait();
         }
 
         /// <summary>
@@ -171,15 +181,18 @@ namespace Catalog.API
         /// <param name="ctx">目录数据库上下文</param>
         /// <param name="loggerFactory">创建日志记录器的工厂</param>
         /// <param name="retries">重试次数</param>
-        private async Task WaitForSqlAvailabilityAsync(CatalogContext ctx, ILoggerFactory loggerFactory, IApplicationBuilder app, int retries = 0)
+        private async Task WaitForSqlAvailabilityAsync(CatalogContext ctx,
+            ILoggerFactory loggerFactory,
+            IApplicationBuilder app,
+            IHostingEnvironment env,
+            int retries = 0)
         {
             var logger = loggerFactory.CreateLogger(nameof(Startup));
             var policy = CreatePolicy(retries, logger, nameof(WaitForSqlAvailabilityAsync));
             await policy.ExecuteAsync(async () =>
             {
-                await CatalogContextSeed.SeedAsync(app, loggerFactory);
+                await CatalogContextSeed.SeedAsync(app, env, loggerFactory);
             });
-
         }
 
         /// <summary>
@@ -200,6 +213,29 @@ namespace Catalog.API
                         logger.LogTrace($"[{prefix}] Exception {exception.GetType().Name} with message ${exception.Message} detected on attempt {retry} of {retries}");
                     }
                 );
+        }
+
+        /// <summary>
+        /// 注册事件总线服务
+        /// </summary>
+        /// <param name="services"></param>
+        private void RegisterEventBus(IServiceCollection services)
+        {
+            services.AddSingleton<IEventBus, EventBusRabbitMQ.EventBusRabbitMQ>();
+            services.AddSingleton<IEventBusSubscriptionsManager, InMemoryEventBusSubscriptionsManager>();
+            services.AddTransient<OrderStatusChangedToAwaitingValidationIntegrationEventHandler>();
+            services.AddTransient<OrderStatusChangedToPaidIntegrationEventHandler>();
+        }
+
+        /// <summary>
+        /// 配置事件总线
+        /// </summary>
+        /// <param name="app"></param>
+        private void ConfigureEventBus(IApplicationBuilder app)
+        {
+            var eventBus = app.ApplicationServices.GetService<IEventBus>();
+            eventBus.Subscribe<OrderStatusChangedToAwaitingValidationIntegrationEvent, OrderStatusChangedToAwaitingValidationIntegrationEventHandler>();
+            eventBus.Subscribe<OrderStatusChangedToPaidIntegrationEvent, OrderStatusChangedToPaidIntegrationEventHandler>();
         }
     }
 }
