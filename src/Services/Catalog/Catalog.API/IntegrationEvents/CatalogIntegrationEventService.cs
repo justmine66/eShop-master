@@ -18,10 +18,10 @@ namespace Catalog.API.IntegrationEvents
     /// </summary>
     public class CatalogIntegrationEventService : ICatalogIntegrationEventService
     {
-        private readonly Func<DbConnection, IIntegrationEventLogService> _integrationEventLogServiceFactory;
-        private readonly IEventBus _eventBus;
-        private readonly CatalogContext _catalogContext;
-        private readonly IIntegrationEventLogService _eventLogService;
+        private readonly Func<DbConnection, IIntegrationEventLogService> _integrationEventLogServiceFactory;//事件日志服务工厂
+        private readonly IEventBus _eventBus;//事件总线
+        private readonly CatalogContext _catalogContext;//目录上下文
+        private readonly IIntegrationEventLogService _eventLogService;//事件日志服务
 
         public CatalogIntegrationEventService(IEventBus eventBus, CatalogContext catalogContext,
         Func<DbConnection, IIntegrationEventLogService> integrationEventLogServiceFactory)

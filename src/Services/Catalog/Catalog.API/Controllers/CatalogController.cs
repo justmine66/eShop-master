@@ -268,7 +268,7 @@ namespace Catalog.API.Controllers
         /// <returns>To目录数据集</returns>
         private List<CatalogItem> ChangeUriPlaceholder(List<CatalogItem> items)
         {
-            var baseUri = _settings.ExternalCatalogBaseUrl;
+            var baseUri = _settings.PicBaseUrl;
             items.ForEach(x =>
             {
                 x.PictureUri = x.PictureUri.Replace("http://externalcatalogbaseurltobereplaced", baseUri);
