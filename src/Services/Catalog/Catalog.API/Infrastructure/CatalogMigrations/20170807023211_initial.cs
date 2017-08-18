@@ -49,12 +49,16 @@ namespace Catalog.API.Infrastructure.CatalogMigrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false),
+                    AvailableStock = table.Column<int>(nullable: false),
                     CatalogBrandId = table.Column<int>(nullable: false),
                     CatalogTypeId = table.Column<int>(nullable: false),
                     Description = table.Column<string>(nullable: true),
+                    MaxStockThreshold = table.Column<int>(nullable: false),
                     Name = table.Column<string>(maxLength: 50, nullable: false),
-                    PictureUri = table.Column<string>(nullable: true),
-                    Price = table.Column<decimal>(nullable: false)
+                    OnReorder = table.Column<bool>(nullable: false),
+                    PictureFileName = table.Column<string>(nullable: true),
+                    Price = table.Column<decimal>(nullable: false),
+                    RestockThreshold = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {

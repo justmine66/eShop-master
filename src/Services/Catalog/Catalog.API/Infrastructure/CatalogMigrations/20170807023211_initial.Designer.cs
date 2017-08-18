@@ -8,7 +8,7 @@ using Catalog.API.Infrastructure;
 namespace Catalog.API.Infrastructure.CatalogMigrations
 {
     [DbContext(typeof(CatalogContext))]
-    [Migration("20170728014330_initial")]
+    [Migration("20170807023211_initial")]
     partial class initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -43,19 +43,27 @@ namespace Catalog.API.Infrastructure.CatalogMigrations
                         .HasAnnotation("SqlServer:HiLoSequenceName", "catalog_hilo")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.SequenceHiLo);
 
+                    b.Property<int>("AvailableStock");
+
                     b.Property<int>("CatalogBrandId");
 
                     b.Property<int>("CatalogTypeId");
 
                     b.Property<string>("Description");
 
+                    b.Property<int>("MaxStockThreshold");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50);
 
-                    b.Property<string>("PictureUri");
+                    b.Property<bool>("OnReorder");
+
+                    b.Property<string>("PictureFileName");
 
                     b.Property<decimal>("Price");
+
+                    b.Property<int>("RestockThreshold");
 
                     b.HasKey("Id");
 

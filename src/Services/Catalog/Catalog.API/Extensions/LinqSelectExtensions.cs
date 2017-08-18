@@ -64,7 +64,7 @@ namespace Catalog.API.Extensions
         }
 
         /// <summary>
-        /// 查询尝试结果聚合
+        /// 查询尝试结果聚合项
         /// </summary>
         /// <typeparam name="TSource">源数据集项类型</typeparam>
         /// <typeparam name="TResult">结果数据集项类型</typeparam>
