@@ -1,5 +1,6 @@
 ﻿using Catalog.API.Extensions;
 using Catalog.API.Model;
+using IntegrationEventLogEF;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -31,8 +32,11 @@ namespace Catalog.API.Infrastructure
 
             var context = (CatalogContext)applicationBuilder
                 .ApplicationServices.GetService(typeof(CatalogContext));
+            var IntegEventLogContext = (IntegrationEventLogContext)applicationBuilder
+                .ApplicationServices.GetService(typeof(IntegrationEventLogContext));
 
             context.Database.Migrate();
+            IntegEventLogContext.Database.Migrate();
 
             var settings = (CatalogSettings)applicationBuilder
                 .ApplicationServices.GetRequiredService<IOptions<CatalogSettings>>().Value;
@@ -360,7 +364,7 @@ namespace Catalog.API.Infrastructure
 
             foreach (var requiredHeader in requiredHeaders)
             {
-                if (!csvheaders.Contains(requiredHeader))
+                if (!csvheaders.Contains(requiredHeader.ToLowerInvariant()))
                 {
                     throw new Exception($"does not contain required header '{requiredHeader}'");
                 }
@@ -369,6 +373,11 @@ namespace Catalog.API.Infrastructure
             return csvheaders;
         }
 
+        /// <summary>
+        /// 提取图片
+        /// </summary>
+        /// <param name="contentRootPath">工作目录</param>
+        /// <param name="picturePath">图片路径</param>
         static void GetCatalogItemPictures(string contentRootPath, string picturePath)
         {
             DirectoryInfo directory = new DirectoryInfo(picturePath);

@@ -18,9 +18,9 @@ namespace Catalog.API
             var host = new WebHostBuilder()
                 .UseKestrel()
                 .UseHealthChecks("/hc")
+                .UseIISIntegration()
                 .UseContentRoot(Directory.GetCurrentDirectory())
                 .UseWebRoot("Pics")
-                .UseIISIntegration()
                 .UseStartup<Startup>()
                 .UseApplicationInsights()
                 .Build();
