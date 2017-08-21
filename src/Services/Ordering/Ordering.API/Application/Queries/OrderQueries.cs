@@ -8,53 +8,55 @@ using System.Threading.Tasks;
 
 namespace Ordering.API.Application.Queries
 {
-    /// <summary>
-    /// 订单查询
-    /// </summary>
-    public class OrderQueries
-        : IOrderQueries
+    public class OrderQueries : IOrderQueries
     {
         private string _connectionString = string.Empty;
 
-        public OrderQueries(string conStr)
+        public OrderQueries(string constr)
         {
-            _connectionString = !string.IsNullOrWhiteSpace(conStr)
-                ? conStr
-                : throw new ArgumentNullException(nameof(conStr));
+            _connectionString =
+                !string.IsNullOrWhiteSpace(constr)
+                ? constr
+                : throw new ArgumentNullException(nameof(constr));
         }
 
-        public Task<IEnumerable<dynamic>> GetCardTypesAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<dynamic> GetOrderAsync(int id)
+        public async Task<IEnumerable<dynamic>> GetCardTypesAsync()
         {
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
 
-                var result = connection.QueryAsync<dynamic>(
-                    @"",
-                    new { id });
-
-                if (result.AsList())
-                {
-
-                }
+                return await connection.QueryAsync<dynamic>("SELECT * FROM ordering.cardtypes");
             }
         }
 
-        public Task<IEnumerable<dynamic>> GetOrdersAsync()
+        public async Task<dynamic> GetOrderAsync(int id)
         {
-            throw new NotImplementedException();
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                var result = await connection.QueryAsync(@"", new { id });
+
+                if (result.AsList().Count == 0)
+                    throw new KeyNotFoundException();
+
+                return this.MapOrderItems(result);
+            }
         }
 
-        //映射订单项
+        public async Task<IEnumerable<dynamic>> GetOrdersAsync()
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                return await connection.QueryAsync<dynamic>("");
+            }
+        }
+
         private dynamic MapOrderItems(dynamic result)
         {
             dynamic order = new ExpandoObject();
-
             return order;
         }
     }
