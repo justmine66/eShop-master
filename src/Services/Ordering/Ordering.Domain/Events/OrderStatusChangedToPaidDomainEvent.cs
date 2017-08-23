@@ -7,7 +7,7 @@ using System.Text;
 namespace Ordering.Domain.Events
 {
     /// <summary>
-    /// 设置订单状态为已支付领域事件
+    /// 设置订单状态为已支付的领域事件
     /// </summary>
     public class OrderStatusChangedToPaidDomainEvent
         :INotification

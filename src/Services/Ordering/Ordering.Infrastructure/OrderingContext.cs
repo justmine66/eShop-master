@@ -20,7 +20,7 @@ namespace Ordering.Infrastructure
     public class OrderingContext
         : DbContext, IUnitOfWork
     {
-        const string DEFAULT_SCHEMA = "ordering";
+        const string DEFAULT_SCHEMA = "ordering";//数据库默认架构
 
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
@@ -247,5 +247,6 @@ namespace Ordering.Infrastructure
 
             return true;
         }
+
     }
 }
