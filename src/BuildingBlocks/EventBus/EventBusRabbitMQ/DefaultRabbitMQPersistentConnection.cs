@@ -16,7 +16,7 @@ namespace EventBusRabbitMQ
     /// 默认的RabbitMQ持久连接器
     /// </summary>
     public class DefaultRabbitMQPersistentConnection
-        : IRabbitMQPersistentConnection
+       : IRabbitMQPersistentConnection
     {
         private readonly IConnectionFactory _connectionFactory;
         private readonly ILogger<DefaultRabbitMQPersistentConnection> _logger;
@@ -66,10 +66,6 @@ namespace EventBusRabbitMQ
             }
         }
 
-        /// <summary>
-        /// 尝试连接
-        /// </summary>
-        /// <returns></returns>
         public bool TryConnect()
         {
             _logger.LogInformation("RabbitMQ Client is trying to connect");

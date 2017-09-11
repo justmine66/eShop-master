@@ -15,6 +15,8 @@ using Polly.Retry;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
+using Newtonsoft.Json.Linq;
+using Autofac;
 
 namespace EventBusRabbitMQ
 {
@@ -26,27 +28,27 @@ namespace EventBusRabbitMQ
     /// </summary>
     public class EventBusRabbitMQ : IEventBus, IDisposable
     {
-        const string BROKER_NAME = "eshop_event_bus";//消息代理名称
+        const string BROKER_NAME = "eshop_event_bus";
 
-        private readonly IRabbitMQPersistentConnection _persistentConnection;//持久连接器
-        private readonly ILogger<EventBusRabbitMQ> _logger;//日志记录器
-        private readonly IEventBusSubscriptionsManager _subsManager;//事件总线订阅管理器
+        private readonly IRabbitMQPersistentConnection _persistentConnection;
+        private readonly ILogger<EventBusRabbitMQ> _logger;
+        private readonly IEventBusSubscriptionsManager _subsManager;
+        private readonly ILifetimeScope _autofac;
+        private readonly string AUTOFAC_SCOPE_NAME = "eshop_event_bus";
 
+        private IModel _consumerChannel;
+        private string _queueName;
 
-        private IModel _consumerChannel;//信道
-        private string _queueName;//队列名称
-
-        public EventBusRabbitMQ(IRabbitMQPersistentConnection persistentConnection, ILogger<EventBusRabbitMQ> logger, IEventBusSubscriptionsManager subsManager)
+        public EventBusRabbitMQ(IRabbitMQPersistentConnection persistentConnection, ILogger<EventBusRabbitMQ> logger,
+            ILifetimeScope autofac, IEventBusSubscriptionsManager subsManager)
         {
-            _persistentConnection = persistentConnection ?? 
-                throw new ArgumentNullException(nameof(persistentConnection));//Rabbit持久连接器
-            _logger = logger ?? 
-                throw new ArgumentNullException(nameof(logger));//日志记录器
-            _subsManager = subsManager ?? 
-                new InMemoryEventBusSubscriptionsManager();//订阅管理器
-            _consumerChannel = CreateConsumerChannel();//创建实时消费信道。
+            _persistentConnection = persistentConnection ?? throw new ArgumentNullException(nameof(persistentConnection));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _subsManager = subsManager ?? new InMemoryEventBusSubscriptionsManager();
+            _consumerChannel = CreateConsumerChannel();
+            _autofac = autofac;
 
-            _subsManager.OnEventRemoved += SubsManager_OnEventRemoved;//注册移除事件回调。
+            _subsManager.OnEventRemoved += SubsManager_OnEventRemoved;
         }
 
         private void SubsManager_OnEventRemoved(object sender, string eventName)
@@ -56,11 +58,11 @@ namespace EventBusRabbitMQ
                 _persistentConnection.TryConnect();
             }
 
-            using (var channel = _persistentConnection.CreateModel())//创建通道
+            using (var channel = _persistentConnection.CreateModel())
             {
                 channel.QueueUnbind(queue: _queueName,
                     exchange: BROKER_NAME,
-                    routingKey: eventName);//根据路由规则(事件名称)，从交换机绑定队列消息。
+                    routingKey: eventName);
 
                 if (_subsManager.IsEmpty)
                 {
@@ -70,33 +72,31 @@ namespace EventBusRabbitMQ
             }
         }
 
-        /// <summary>
-        /// 发布事件
-        /// </summary>
-        /// <param name="event"></param>
         public void Publish(IntegrationEvent @event)
         {
-            if (!_persistentConnection.IsConnected)//判断连接是否有效
+            if (!_persistentConnection.IsConnected)
+            {
                 _persistentConnection.TryConnect();
+            }
 
             var policy = RetryPolicy.Handle<BrokerUnreachableException>()
                 .Or<SocketException>()
                 .WaitAndRetry(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
                 {
                     _logger.LogWarning(ex.ToString());
-                });//声明事件发布重试策略，处理瞬时或不确定移除导致失败的情况。
+                });
 
-            using (var channel = _persistentConnection.CreateModel())//创建信道
+            using (var channel = _persistentConnection.CreateModel())
             {
                 var eventName = @event.GetType()
-                    .Name;//事件名称
+                    .Name;
 
                 channel.ExchangeDeclare(exchange: BROKER_NAME,
-                                    type: "direct");//申明交换机
-                //将事件对象序列化成（RabbitMQ能传递的）二进制块。
+                                    type: "direct");
+
                 var message = JsonConvert.SerializeObject(@event);
                 var body = Encoding.UTF8.GetBytes(message);
-                //发布事件
+
                 policy.Execute(() =>
                 {
                     channel.BasicPublish(exchange: BROKER_NAME,
@@ -107,22 +107,31 @@ namespace EventBusRabbitMQ
             }
         }
 
-        /// <summary>
-        /// 订阅事件
-        /// </summary>
-        /// <typeparam name="T">事件</typeparam>
-        /// <typeparam name="TH">事件处理</typeparam>
-        /// <param name="handler"></param>
-        public void Subscribe<T, TH>(Func<TH> handler)
+        public void SubscribeDynamic<TH>(string eventName)
+            where TH : IDynamicIntegrationEventHandler
+        {
+            DoInternalSubscription(eventName);
+            _subsManager.AddDynamicSubscription<TH>(eventName);
+        }
+
+        public void Subscribe<T, TH>()
             where T : IntegrationEvent
             where TH : IIntegrationEventHandler<T>
         {
-            var eventName = typeof(T).Name;
-            var containsKey = _subsManager.HasSubscriptionsForEvent<T>();
+            var eventName = _subsManager.GetEventKey<T>();
+            DoInternalSubscription(eventName);
+            _subsManager.AddSubscription<T, TH>();
+        }
+
+        private void DoInternalSubscription(string eventName)
+        {
+            var containsKey = _subsManager.HasSubscriptionsForEvent(eventName);
             if (!containsKey)
             {
                 if (!_persistentConnection.IsConnected)
+                {
                     _persistentConnection.TryConnect();
+                }
 
                 using (var channel = _persistentConnection.CreateModel())
                 {
@@ -131,16 +140,8 @@ namespace EventBusRabbitMQ
                                       routingKey: eventName);
                 }
             }
-
-            _subsManager.AddSubscription<T, TH>(handler);
-
         }
 
-        /// <summary>
-        /// 取消订阅事件
-        /// </summary>
-        /// <typeparam name="T">事件</typeparam>
-        /// <typeparam name="TH">事件处理</typeparam>
         public void Unsubscribe<T, TH>()
             where TH : IIntegrationEventHandler<T>
             where T : IntegrationEvent
@@ -148,18 +149,12 @@ namespace EventBusRabbitMQ
             _subsManager.RemoveSubscription<T, TH>();
         }
 
-        private static Func<IIntegrationEventHandler> FindHandlerByType(Type handlerType, IEnumerable<Func<IIntegrationEventHandler>> handlers)
+        public void UnsubscribeDynamic<TH>(string eventName)
+            where TH : IDynamicIntegrationEventHandler
         {
-            foreach (var func in handlers)
-            {
-                if (func.GetMethodInfo().ReturnType == handlerType)
-                {
-                    return func;
-                }
-            }
-
-            return null;
+            _subsManager.RemoveDynamicSubscription<TH>(eventName);
         }
+
 
         public void Dispose()
         {
@@ -209,17 +204,30 @@ namespace EventBusRabbitMQ
 
         private async Task ProcessEvent(string eventName, string message)
         {
+
+
             if (_subsManager.HasSubscriptionsForEvent(eventName))
             {
-                var eventType = _subsManager.GetEventTypeByName(eventName);
-                var integrationEvent = JsonConvert.DeserializeObject(message, eventType);
-                var handlers = _subsManager.GetHandlersForEvent(eventName);
-
-                foreach (var handlerfactory in handlers)
+                using (var scope = _autofac.BeginLifetimeScope(AUTOFAC_SCOPE_NAME))
                 {
-                    var handler = handlerfactory.DynamicInvoke();
-                    var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType);
-                    await (Task)concreteType.GetMethod("Handle").Invoke(handler, new object[] { integrationEvent });
+                    var subscriptions = _subsManager.GetHandlersForEvent(eventName);
+                    foreach (var subscription in subscriptions)
+                    {
+                        if (subscription.IsDynamic)
+                        {
+                            var handler = scope.ResolveOptional(subscription.HandlerType) as IDynamicIntegrationEventHandler;
+                            dynamic eventData = JObject.Parse(message);
+                            await handler.Handle(eventData);
+                        }
+                        else
+                        {
+                            var eventType = _subsManager.GetEventTypeByName(eventName);
+                            var integrationEvent = JsonConvert.DeserializeObject(message, eventType);
+                            var handler = scope.ResolveOptional(subscription.HandlerType);
+                            var concreteType = typeof(IIntegrationEventHandler<>).MakeGenericType(eventType);
+                            await (Task)concreteType.GetMethod("Handle").Invoke(handler, new object[] { integrationEvent });
+                        }
+                    }
                 }
             }
         }
