@@ -25,7 +25,7 @@ namespace EventBusRabbitMQ
         /// <summary>
         /// 创建通用AMQP模型
         /// </summary>
-        /// <returns></returns>
+        /// <returns>AMQP模型</returns>
         IModel CreateModel();
     }
 }

@@ -9,7 +9,7 @@ using IntegrationEventLogEF.ValueObjects;
 namespace Catalog.API.Infrastructure.IntegrationEventMigrations
 {
     [DbContext(typeof(IntegrationEventLogContext))]
-    [Migration("20170728060014_initial")]
+    [Migration("20170807023230_initial")]
     partial class initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

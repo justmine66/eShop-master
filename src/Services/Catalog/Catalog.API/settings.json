@@ -1,7 +1,7 @@
 ﻿{
   "ConnectionString": "Server=JUSTMINE-PC;Initial Catalog=eShop.Services.CatalogDb;User Id=sa;Password=1",
   "PicBaseUrl": "http://localhost:5101/api/v1/catalog/items/[0]/pic/",
-  "UseCustomizationData": false,
+  "UseCustomizationData": true,
   "EventBusConnection": "localhost",
   "Logging": {
     "IncludeScopes": false,
