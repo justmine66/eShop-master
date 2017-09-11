@@ -51,7 +51,7 @@ namespace Ordering.API.Application.IntegrationEvents
            {
                //通过一个本地事务，保证原始订单和事件日志的原子性
                await this._orderingContext.SaveChangesAsync();
-               await this._eventLogService.SaveEventAsync(evt, this._orderingContext.Database.CurrentTransaction.GetDbTransaction());
+               await this._eventLogService.SaveEventAsync(@event, this._orderingContext.Database.CurrentTransaction.GetDbTransaction());
            });
         }
     }

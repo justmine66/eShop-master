@@ -18,7 +18,7 @@ namespace Ordering.API.Application.Commands
 
         protected override bool CreateResultForDuplicateRequest()
         {
-            return true;                // Ignore duplicate requests for creating order.
+            return true;       
         }
     }
 
@@ -32,13 +32,20 @@ namespace Ordering.API.Application.Commands
         private readonly IIdentityService _identityService;
         private readonly IMediator _mediator;
 
-        public CreateOrderCommandHandler(IMediator mediator, IOrderRepository orderRepository, IIdentityService identityService)
+        public CreateOrderCommandHandler(IMediator mediator, 
+            IOrderRepository orderRepository, 
+            IIdentityService identityService)
         {
             this._orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
             this._identityService = identityService ?? throw new ArgumentNullException(nameof(identityService));
             this._mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         }
 
+        /// <summary>
+        /// 处理命令
+        /// </summary>
+        /// <param name="message">订单创建命令</param>
+        /// <returns>是否创建成果</returns>
         public async Task<bool> Handle(CreateOrderCommand message)
         {
             var address = new Address(message.Street, message.City, message.State, message.Country, message.ZipCode);

@@ -7,7 +7,7 @@ using System.Linq;
 namespace Ordering.Domain.SeedWork
 {
     /// <summary>
-    /// 枚举抽象
+    /// 枚举
     /// </summary>
     public abstract class Enumeration : IComparable
     {
@@ -22,10 +22,16 @@ namespace Ordering.Domain.SeedWork
         public string Name { get; private set; }
 
         protected Enumeration() { }
+
+        /// <summary>
+        /// 初始化一个枚举实例
+        /// </summary>
+        /// <param name="id">标识</param>
+        /// <param name="name">名称</param>
         protected Enumeration(int id, string name)
         {
-            Id = id;
-            Name = name;
+            this.Id = id;
+            this.Name = name;
         }
 
         public override string ToString()
@@ -34,7 +40,7 @@ namespace Ordering.Domain.SeedWork
         }
 
         /// <summary>
-        /// 获取一个枚举类型中，所有能转化成Enumeration的字段实例。
+        /// 获取枚举实例中所有枚举字段表示的集合。
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
@@ -46,7 +52,7 @@ namespace Ordering.Domain.SeedWork
             foreach (var info in fields)
             {
                 var instance = new T();
-                var locatedValue = info.GetValue(instance) as T;
+                var locatedValue = info.GetValue(instance) as T;//枚举字段
                 if (locatedValue != null)
                 {
                     yield return locatedValue;
@@ -54,6 +60,11 @@ namespace Ordering.Domain.SeedWork
             }
         }
 
+        /// <summary>
+        /// 等于
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
         public override bool Equals(object obj)
         {
             var otherValue = obj as Enumeration;
@@ -63,12 +74,11 @@ namespace Ordering.Domain.SeedWork
                 return false;
             }
 
-            var typeMatches = this.GetType().Equals(obj.GetType());
-            var valueMatches = this.Id.Equals(otherValue.Id);
+            var typeMatches = this.GetType().Equals(obj.GetType());//类型匹配
+            var valueMatches = this.Id.Equals(otherValue.Id);//值匹配
 
             return typeMatches && valueMatches;
         }
-
         public override int GetHashCode()
         {
             return this.Id.GetHashCode();
@@ -77,9 +87,9 @@ namespace Ordering.Domain.SeedWork
         /// <summary>
         /// 获取两个枚举的绝对差额
         /// </summary>
-        /// <param name="firstValue"></param>
-        /// <param name="secondValue"></param>
-        /// <returns></returns>
+        /// <param name="firstValue">枚举一</param>
+        /// <param name="secondValue">枚举二</param>
+        /// <returns>绝对差额</returns>
         public static int AbsoluteDifference(Enumeration firstValue, Enumeration secondValue)
         {
             var absoluteDifference = Math.Abs(firstValue.Id - secondValue.Id);
@@ -108,16 +118,14 @@ namespace Ordering.Domain.SeedWork
         public static T FromName<T>(string name)
             where T : Enumeration, new()
         {
-            var matchingItem = Parse<T, string>(name,
-                "name",
-                item => item.Name == name);
+            var matchingItem = Parse<T, string>(name, "name", item => item.Name == name);
             return matchingItem;
         }
 
         private static T Parse<T, K>(K value, string description, Func<T, bool> predicate)
             where T : Enumeration, new()
         {
-            var matchingItem = GetAll<T>().FirstOrDefault(predicate);
+            var matchingItem = GetAll<T>().FirstOrDefault(predicate);//获取指定枚举字段
 
             if (matchingItem == null)
             {
@@ -136,7 +144,8 @@ namespace Ordering.Domain.SeedWork
         /// <returns>1表示大于，0表示等于，-1表示小于</returns>
         public int CompareTo(object obj)
         {
-            return this.Id.CompareTo((obj as Enumeration).Id);
+            var other = obj as Enumeration;
+            return other != null ? this.Id.CompareTo(other.Id) : -1;
         }
     }
 }

@@ -10,14 +10,18 @@ using Microsoft.EntityFrameworkCore;
 namespace Ordering.Infrastructure.Repositories
 {
     /// <summary>
-    /// 买家仓库
+    /// 买家仓储
     /// </summary>
     public class BuyerRepository
         : IBuyerRepository
     {
-        private readonly OrderingContext _context;
-        public IUnitOfWork UnitOfWork => this._context;
+        private readonly OrderingContext _context;//订单域上下文
+        public IUnitOfWork UnitOfWork => this._context;//统一工作单元
 
+        /// <summary>
+        /// 初始化一个买家仓储实例
+        /// </summary>
+        /// <param name="context">订单域上下文</param>
         public BuyerRepository(OrderingContext context)
         {
             this._context = context ?? throw new ArgumentNullException(nameof(context));
@@ -39,7 +43,7 @@ namespace Ordering.Infrastructure.Repositories
         public async Task<Buyer> FindAsync(string buyerIdentityGuid)
         {
             var buyer = await this._context.Buyers
-                .Include(b => b.PaymentMethods)
+                .Include(b => b.PaymentMethods)//同步加载支付方式
                 .SingleOrDefaultAsync(b => b.IdentityGuid == buyerIdentityGuid);
 
             return buyer;

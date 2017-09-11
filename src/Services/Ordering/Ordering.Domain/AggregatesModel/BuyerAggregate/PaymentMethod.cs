@@ -7,7 +7,7 @@ using System.Text;
 namespace Ordering.Domain.AggregatesModel.BuyerAggregate
 {
     /// <summary>
-    /// 付款方式
+    /// 付款方式实体
     /// </summary>
     public class PaymentMethod
         : Entity
@@ -19,9 +19,21 @@ namespace Ordering.Domain.AggregatesModel.BuyerAggregate
         private DateTime _expiration;
 
         private int _cartTypeId;
+        /// <summary>
+        /// 银行卡类型
+        /// </summary>
         public CardType CardType { get; private set; }
 
         protected PaymentMethod() { }
+        /// <summary>
+        /// 初始一个化付款方式实例
+        /// </summary>
+        /// <param name="cardTypeId">银行卡类型标识</param>
+        /// <param name="alias">别名</param>
+        /// <param name="cardNumber">卡号</param>
+        /// <param name="securityNumber">密码</param>
+        /// <param name="cardHolderName">持卡人姓名</param>
+        /// <param name="expiration">过期时间</param>
         public PaymentMethod(
             int cardTypeId,
             string alias,
@@ -44,6 +56,13 @@ namespace Ordering.Domain.AggregatesModel.BuyerAggregate
             this._expiration = expiration;
         }
 
+        /// <summary>
+        /// 判断付款方式是否相同
+        /// </summary>
+        /// <param name="cardTypeId">银行卡类型标识</param>
+        /// <param name="cardNumber">银行卡号</param>
+        /// <param name="expiration">过期时间</param>
+        /// <returns></returns>
         public bool IsEqualTo(int cardTypeId, string cardNumber, DateTime expiration)
         {
             return this._cartTypeId == cardTypeId
