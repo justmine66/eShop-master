@@ -16,10 +16,12 @@ namespace Ordering.API.Application.Commands
 
         protected override bool CreateResultForDuplicateRequest()
         {
-            return true;                // Ignore duplicate requests for processing order.
+            return true;                
         }
     }
-
+    /// <summary>
+    /// 派送订单命令处理
+    /// </summary>
     public class ShipOrderCommandHandler : IAsyncRequestHandler<ShipOrderCommand, bool>
     {
         private readonly IOrderRepository _orderRepository;

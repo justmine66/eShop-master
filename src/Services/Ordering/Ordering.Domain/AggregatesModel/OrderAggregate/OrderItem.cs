@@ -17,10 +17,21 @@ namespace Ordering.Domain.AggregatesModel.OrderAggregate
         private decimal _unitPrice;
         private decimal _discount;
         private int _units;
-
+        /// <summary>
+        /// 商品标识
+        /// </summary>
         public int ProductId { get; private set; }
 
         protected OrderItem() { }
+        /// <summary>
+        /// 初始化一个订单项实例
+        /// </summary>
+        /// <param name="productId">商品标识</param>
+        /// <param name="productName">商品名称</param>
+        /// <param name="unitPrice">单价</param>
+        /// <param name="discount">折扣</param>
+        /// <param name="PictureUrl">图片Url</param>
+        /// <param name="units">购买数量</param>
         public OrderItem(int productId,
             string productName,
             decimal unitPrice,
@@ -28,12 +39,12 @@ namespace Ordering.Domain.AggregatesModel.OrderAggregate
             string PictureUrl,
             int units = 1)
         {
-            if (units < 0)
+            if (units < 0)//购买数量小于0
             {
                 throw new OrderingDomainException("Invalid numbers of units");
             }
 
-            if ((unitPrice * units) < discount)
+            if ((unitPrice * units) < discount)//商品总额小于折扣
             {
                 throw new OrderingDomainException("The total of order item is lower than applied discount");
             }
@@ -60,6 +71,12 @@ namespace Ordering.Domain.AggregatesModel.OrderAggregate
         }
 
         /// <summary>
+        /// 获取订单项商品名称
+        /// </summary>
+        /// <returns></returns>
+        public string GetOrderItemProductName() => _productName;
+
+        /// <summary>
         /// 获取当前折扣
         /// </summary>
         /// <returns></returns>
@@ -67,22 +84,6 @@ namespace Ordering.Domain.AggregatesModel.OrderAggregate
         {
             return this._discount;
         }
-
-        /// <summary>
-        /// 获取购买数量
-        /// </summary>
-        /// <returns></returns>
-        public int GetUnits()
-        {
-            return this._units;
-        }
-
-        /// <summary>
-        /// 获取订单项商品名称
-        /// </summary>
-        /// <returns></returns>
-        public string GetOrderItemProductName() => _productName;
-
         /// <summary>
         /// 设置新折扣
         /// </summary>
@@ -98,6 +99,14 @@ namespace Ordering.Domain.AggregatesModel.OrderAggregate
         }
 
         /// <summary>
+        /// 获取购买数量
+        /// </summary>
+        /// <returns></returns>
+        public int GetUnits()
+        {
+            return this._units;
+        }
+        /// <summary>
         /// 添加购买数量
         /// </summary>
         /// <param name="units"></param>
@@ -108,7 +117,7 @@ namespace Ordering.Domain.AggregatesModel.OrderAggregate
                 throw new OrderingDomainException("Invalid units");
             }
 
-            _units += units;
+            this._units += units;
         }
     }
 }

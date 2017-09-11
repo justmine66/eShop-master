@@ -8,6 +8,9 @@ using Ordering.Domain.AggregatesModel.OrderAggregate;
 
 namespace Ordering.API.Application.Commands
 {
+    /// <summary>
+    /// 取消订单命令处理
+    /// </summary>
     public class CancelOrderCommandIdentifiedHandler : IdentifierCommandHandler<CancelOrderCommand, bool>
     {
         public CancelOrderCommandIdentifiedHandler(IMediator mediator, IRequestManager requestManager)

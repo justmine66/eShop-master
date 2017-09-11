@@ -6,7 +6,7 @@ using System.Text;
 namespace Ordering.Domain.AggregatesModel.OrderAggregate
 {
     /// <summary>
-    /// 地址
+    /// 地址-值对象
     /// </summary>
     public class Address
         : ValueObject
@@ -39,6 +39,14 @@ namespace Ordering.Domain.AggregatesModel.OrderAggregate
         public String ZipCode { get; private set; }
 
         private Address() { }
+        /// <summary>
+        /// 初始化一个地址实例
+        /// </summary>
+        /// <param name="street">街道</param>
+        /// <param name="city">城市</param>
+        /// <param name="state">省份</param>
+        /// <param name="country">国家</param>
+        /// <param name="zipcode">邮政编码</param>
         public Address(string street, string city, string state, string country, string zipcode)
         {
             this.Street = street;
@@ -49,7 +57,7 @@ namespace Ordering.Domain.AggregatesModel.OrderAggregate
         }
 
         /// <summary>
-        /// 获取原子值数据集
+        /// 获取地址所有原子项值集合
         /// </summary>
         /// <returns></returns>
         protected override IEnumerable<object> GetAtomicValues()

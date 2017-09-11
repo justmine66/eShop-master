@@ -9,7 +9,7 @@ namespace Ordering.API.Application.Commands
     /// <summary>
     /// 可识别的命令
     /// </summary>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">命令</typeparam>
     /// <typeparam name="R"></typeparam>
     public class IdentifiedCommand<T, R> : IRequest<R>
         where T : IRequest<R>

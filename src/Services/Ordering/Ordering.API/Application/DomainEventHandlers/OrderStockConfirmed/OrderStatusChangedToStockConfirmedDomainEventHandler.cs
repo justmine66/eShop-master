@@ -9,19 +9,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Ordering.API.DomainEventHandlers.OrderPaid
+namespace Ordering.API.Application.DomainEventHandlers.OrderStockConfirmed
 {
     /// <summary>
-    /// 订单状态改变成已支付领域事件处理
+    /// 订单状态改变成库存确认领域事件处理
     /// </summary>
-    public class OrderStatusChangedToPaidDomainEventHandler
-        : IAsyncNotificationHandler<OrderStatusChangedToPaidDomainEvent>
+    public class OrderStatusChangedToStockConfirmedDomainEventHandler
+        : IAsyncNotificationHandler<OrderStatusChangedToStockConfirmedDomainEvent>
     {
         private readonly IOrderRepository _orderRepository;
         private readonly ILoggerFactory _logger;
         private readonly IOrderingIntegrationEventService _orderingIntegrationEventService;
 
-        public OrderStatusChangedToPaidDomainEventHandler(
+        public OrderStatusChangedToStockConfirmedDomainEventHandler(
             IOrderRepository orderRepository, ILoggerFactory logger,
             IOrderingIntegrationEventService orderingIntegrationEventService)
         {
@@ -30,16 +30,14 @@ namespace Ordering.API.DomainEventHandlers.OrderPaid
             this._orderingIntegrationEventService = orderingIntegrationEventService;
         }
 
-        public async Task Handle(OrderStatusChangedToPaidDomainEvent domainEvent)
+        public async Task Handle(OrderStatusChangedToStockConfirmedDomainEvent @event)
         {
-            this._logger.CreateLogger(nameof(OrderStatusChangedToPaidDomainEventHandler))
-                .LogTrace($"订单 {domainEvent.OrderId} 状态已成功改变为:{OrderStatus.Paid.Id}{OrderStatus.Paid.Name}");
+            _logger.CreateLogger(nameof(OrderStatusChangedToStockConfirmedDomainEventHandler))
+               .LogTrace($"Order with Id: {@event.OrderId} has been successfully updated with " +
+                         $"a status order id: {OrderStatus.StockConfirmed.Id}");
 
-            var orderStockList = domainEvent.OrderItems
-                .Select(orderItem => { return new OrderStockItem(orderItem.ProductId, orderItem.GetUnits()); });
-
-            var integrationEvent = new OrderStatusChangedToPaidIntegrationEvent(domainEvent.OrderId, orderStockList);
-            await this._orderingIntegrationEventService.PublishThroughEventBusAsync(integrationEvent);
+            var integration = new OrderStatusChangedToStockConfirmedIntegrationEvent(@event.OrderId);
+            await this._orderingIntegrationEventService.PublishThroughEventBusAsync(integration);
         }
     }
 }

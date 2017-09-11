@@ -5,7 +5,7 @@ using System.Text;
 namespace Ordering.Domain.Exceptions
 {
     /// <summary>
-    /// 订单领域异常类
+    /// 订单域异常类
     /// </summary>
     public class OrderingDomainException : Exception
     {

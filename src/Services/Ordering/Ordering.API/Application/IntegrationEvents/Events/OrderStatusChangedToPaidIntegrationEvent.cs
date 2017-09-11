@@ -20,7 +20,9 @@ namespace Ordering.API.Application.IntegrationEvents.Events
             this.OrderStockItems = orderStockItems;
         }
     }
-
+    /// <summary>
+    /// 订单库存项
+    /// </summary>
     public class OrderStockItem
     {
         public int ProductId { get; }
