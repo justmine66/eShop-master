@@ -8,7 +8,7 @@ namespace Ordering.API
     /// <summary>
     /// 订单子域配置信息
     /// </summary>
-    public class OrderingSetting
+    public class OrderingSettings
     {
         /// <summary>
         /// 是否使用用户自定义数据

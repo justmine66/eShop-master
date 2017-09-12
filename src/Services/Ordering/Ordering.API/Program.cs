@@ -5,6 +5,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore;
+using Microsoft.Extensions.Logging;
 
 namespace Ordering.API
 {
@@ -12,16 +14,20 @@ namespace Ordering.API
     {
         public static void Main(string[] args)
         {
-            var host = new WebHostBuilder()
-                .UseKestrel()
-                .UseHealthChecks("/hc")
-                .UseContentRoot(Directory.GetCurrentDirectory())
-                .UseIISIntegration()
-                .UseStartup<Startup>()
-                .UseApplicationInsights()
-                .Build();
-
-            host.Run();
+            BuildWebHost(args).Run();
         }
+
+        public static IWebHost BuildWebHost(string[] args) =>
+            WebHost.CreateDefaultBuilder(args)
+            .UseKestrel()
+            .UseStartup<Startup>()
+            .UseHealthChecks("/hc")
+            .UseContentRoot(Directory.GetCurrentDirectory())
+            .ConfigureLogging((hostingContext, builder) =>
+            {
+                builder.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+                builder.AddConsole();
+                builder.AddDebug();
+            }).Build();
     }
 }
