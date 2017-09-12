@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Ordering.Domain.SeedWork
 {
     /// <summary>
-    /// 统一工作单元接口,保证聚合业务规则和数据一致性.
+    /// 统一工作单元接口,保证聚合根(业务规则和数据)一致性.
     /// </summary>
     public interface IUnitOfWork : IDisposable
     {

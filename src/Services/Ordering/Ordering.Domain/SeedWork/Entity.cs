@@ -13,7 +13,7 @@ namespace Ordering.Domain.SeedWork
         int? _requestHashCode;//所请求哈希码
         int _Id;//标识
 
-        private List<INotification> _domainEvents;//领域事件字段
+        private List<INotification> _domainEvents;//领域事件列表
 
         public virtual int Id
         {

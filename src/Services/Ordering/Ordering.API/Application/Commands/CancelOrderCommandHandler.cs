@@ -9,7 +9,7 @@ using Ordering.Domain.AggregatesModel.OrderAggregate;
 namespace Ordering.API.Application.Commands
 {
     /// <summary>
-    /// 取消订单命令处理
+    /// 取消订单可识别的命令处理
     /// </summary>
     public class CancelOrderCommandIdentifiedHandler : IdentifierCommandHandler<CancelOrderCommand, bool>
     {
@@ -24,6 +24,9 @@ namespace Ordering.API.Application.Commands
         }
     }
 
+    /// <summary>
+    /// 取消订单命令处理
+    /// </summary>
     public class CancelOrderCommandHandler : IAsyncRequestHandler<CancelOrderCommand, bool>
     {
         private readonly IOrderRepository _orderRepository;
