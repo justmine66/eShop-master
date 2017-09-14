@@ -49,7 +49,7 @@ namespace Ordering.Domain.AggregatesModel.OrderAggregate
         /// </summary>
         /// <param name="id">标识</param>
         /// <param name="name">名称</param>
-        protected OrderStatus(int id, string name) : base(id, name) { }
+        public OrderStatus(int id, string name) : base(id, name) { }
 
         /// <summary>
         /// 订单状态枚举列表

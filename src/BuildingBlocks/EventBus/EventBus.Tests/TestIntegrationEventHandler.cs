@@ -1,16 +1,16 @@
-﻿using System;
+﻿using EventBus.Abstractions;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
-using EventBus.Abstractions;
 
-namespace EventBus.Test
+namespace EventBus.Tests
 {
-    public class TestIntegrationOtherEventHandler : IIntegrationEventHandler<TestIntegrationEvent>
+    public class TestIntegrationEventHandler : IIntegrationEventHandler<TestIntegrationEvent>
     {
         public bool Handled { get; private set; }
 
-        public TestIntegrationOtherEventHandler()
+        public TestIntegrationEventHandler()
         {
             Handled = false;
         }

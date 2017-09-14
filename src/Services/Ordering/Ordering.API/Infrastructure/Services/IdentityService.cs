@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace Ordering.API.Infrastructure.Services
 {
+    /// <summary>
+    /// 身份服务
+    /// </summary>
     public class IdentityService : IIdentityService
     {
         private IHttpContextAccessor _context;

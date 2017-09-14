@@ -13,7 +13,7 @@ namespace EventBus
     public interface IEventBusSubscriptionsManager
     {
         /// <summary>
-        /// 是否为空
+        /// 订阅信息是否为空
         /// </summary>
         bool IsEmpty { get; }
 
