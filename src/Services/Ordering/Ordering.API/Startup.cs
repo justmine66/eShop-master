@@ -32,6 +32,10 @@ using Ordering.API.Infrastructure.AutofacModules;
 using System.Data.SqlClient;
 using Polly;
 using Ordering.API.Infrastructure;
+using System.Reflection;
+using IntegrationEventLogEF;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Ordering.API.Application.IntegrationEvents.Events;
 
 namespace Ordering.API
 {
@@ -72,7 +76,16 @@ namespace Ordering.API
                 .AddDbContext<OrderingContext>(options =>
                 {
                     options.UseSqlServer(Configuration["ConnectionString"],
-                        sqlServerOptionsAction: (sqlOptions) =>
+                        sqlServerOptionsAction: sqlOptions =>
+                         {
+                             sqlOptions.MigrationsAssembly(typeof(Startup).GetType().Assembly.GetName().Name);
+                             sqlOptions.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
+                         });
+                })
+                .AddDbContext<IntegrationEventLogContext>(options =>
+                {
+                    options.UseSqlServer(Configuration["ConnectionString"],
+                         sqlServerOptionsAction: sqlOptions =>
                          {
                              sqlOptions.MigrationsAssembly(typeof(Startup).GetType().Assembly.GetName().Name);
                              sqlOptions.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
@@ -183,19 +196,28 @@ namespace Ordering.API
             app.UseAuthentication();
 
             app.UseMvcWithDefaultRoute();
-
+            // 使用WebApi文档生成服务
             app.UseSwagger()
                 .UseSwaggerUI(options =>
                 {
                     options.SwaggerEndpoint("/swagger/v1/swagger.json", "订单子域微服务 v1");
                     options.ConfigureOAuth2("orderingswaggerui", "", "", "Ordering Swagger UI");
                 });
-
+            // 等待数据库可用
             WaitForSqlAvailabilityAsync(loggerFactory, app, env).Wait();
-
-
+            // 配置事件总线，添加事件订阅信息。
+            ConfigEventBus(app);
         }
 
+        private void ConfigEventBus(IApplicationBuilder app)
+        {
+            var eventBus = app.ApplicationServices.GetRequiredService<IEventBus>();
+
+            eventBus.Subscribe<GracePeriodConfirmedIntegrationEvent, IIntegrationEventHandler<GracePeriodConfirmedIntegrationEvent>>();
+            eventBus.Subscribe<OrderStatusChangedToAwaitingValidationIntegrationEvent, IIntegrationEventHandler<OrderStatusChangedToAwaitingValidationIntegrationEvent>>();
+            eventBus.Subscribe<OrderStatusChangedToPaidIntegrationEvent, IIntegrationEventHandler<OrderStatusChangedToPaidIntegrationEvent>>();
+            eventBus.Subscribe<OrderStatusChangedToStockConfirmedIntegrationEvent, IIntegrationEventHandler<OrderStatusChangedToStockConfirmedIntegrationEvent>>();
+        }
         private void RegisterEventBusServices(IServiceCollection services)
         {
             if (Configuration.GetValue<bool>("AzureServiceBusEnabled"))
@@ -232,7 +254,7 @@ namespace Ordering.API
             int retries = 5)
         {
             var logger = loggerFactory.CreateLogger<Startup>();
-            var policy = this.CreatePolicy(logger, 5, nameof(WaitSqlAvailabilityAsync));
+            var policy = this.CreatePolicy(logger, 5, nameof(WaitForSqlAvailabilityAsync));
             await policy.ExecuteAsync(async () =>
             {
                 await OrderingContextSeed.SeedAsync(app, env, loggerFactory);

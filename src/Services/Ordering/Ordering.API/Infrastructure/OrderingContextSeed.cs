@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using IntegrationEventLogEF;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,6 +47,11 @@ namespace Ordering.API.Infrastructure
             using (context)
             {
                 context.Database.Migrate();
+
+                //迁移事件溯源上下文
+                var IntegEventLogContext = (IntegrationEventLogContext)applicationBuilder
+               .ApplicationServices.GetService(typeof(IntegrationEventLogContext));
+                IntegEventLogContext.Database.Migrate();
 
                 if (!context.CardTypes.Any())
                 {
