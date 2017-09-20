@@ -81,7 +81,7 @@ namespace Ordering.API
                              sqlOptions.MigrationsAssembly(typeof(Startup).GetType().Assembly.GetName().Name);
                              sqlOptions.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
                          });
-                })
+                }, ServiceLifetime.Scoped)
                 .AddDbContext<IntegrationEventLogContext>(options =>
                 {
                     options.UseSqlServer(Configuration["ConnectionString"],
@@ -90,7 +90,7 @@ namespace Ordering.API
                              sqlOptions.MigrationsAssembly(typeof(Startup).GetType().Assembly.GetName().Name);
                              sqlOptions.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
                          });
-                });
+                }, ServiceLifetime.Scoped);
             // 注册配置服务
             services.Configure<OrderingSettings>(Configuration);
             services.AddOptions();
@@ -206,6 +206,7 @@ namespace Ordering.API
             // 配置事件总线，添加事件订阅信息。
             ConfigEventBus(app);
         }
+
         //配置事件总线
         private void ConfigEventBus(IApplicationBuilder app)
         {
