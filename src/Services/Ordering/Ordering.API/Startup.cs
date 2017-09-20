@@ -203,20 +203,20 @@ namespace Ordering.API
                     options.SwaggerEndpoint("/swagger/v1/swagger.json", "订单子域微服务 v1");
                     options.ConfigureOAuth2("orderingswaggerui", "", "", "Ordering Swagger UI");
                 });
-            // 等待数据库可用
-            WaitForSqlAvailabilityAsync(loggerFactory, app, env).Wait();
             // 配置事件总线，添加事件订阅信息。
             ConfigEventBus(app);
         }
-
+        //配置事件总线
         private void ConfigEventBus(IApplicationBuilder app)
         {
             var eventBus = app.ApplicationServices.GetRequiredService<IEventBus>();
 
+            eventBus.Subscribe<UserCheckoutAcceptedIntegrationEvent, IIntegrationEventHandler<UserCheckoutAcceptedIntegrationEvent>>();
             eventBus.Subscribe<GracePeriodConfirmedIntegrationEvent, IIntegrationEventHandler<GracePeriodConfirmedIntegrationEvent>>();
-            eventBus.Subscribe<OrderStatusChangedToAwaitingValidationIntegrationEvent, IIntegrationEventHandler<OrderStatusChangedToAwaitingValidationIntegrationEvent>>();
-            eventBus.Subscribe<OrderStatusChangedToPaidIntegrationEvent, IIntegrationEventHandler<OrderStatusChangedToPaidIntegrationEvent>>();
-            eventBus.Subscribe<OrderStatusChangedToStockConfirmedIntegrationEvent, IIntegrationEventHandler<OrderStatusChangedToStockConfirmedIntegrationEvent>>();
+            eventBus.Subscribe<OrderStockConfirmedIntegrationEvent, IIntegrationEventHandler<OrderStockConfirmedIntegrationEvent>>();
+            eventBus.Subscribe<OrderStockRejectedIntegrationEvent, IIntegrationEventHandler<OrderStockRejectedIntegrationEvent>>();
+            eventBus.Subscribe<OrderPaymentFailedIntegrationEvent, IIntegrationEventHandler<OrderPaymentFailedIntegrationEvent>>();
+            eventBus.Subscribe<OrderPaymentSuccededIntegrationEvent, IIntegrationEventHandler<OrderPaymentSuccededIntegrationEvent>>();
         }
         private void RegisterEventBusServices(IServiceCollection services)
         {
@@ -247,30 +247,6 @@ namespace Ordering.API
                 options.RequireHttpsMetadata = false;//开发环境中禁用Https
                 options.Audience = "orders";
             });
-        }
-        private async Task WaitForSqlAvailabilityAsync(ILoggerFactory loggerFactory,
-            IApplicationBuilder app,
-            IHostingEnvironment env,
-            int retries = 5)
-        {
-            var logger = loggerFactory.CreateLogger<Startup>();
-            var policy = this.CreatePolicy(logger, 5, nameof(WaitForSqlAvailabilityAsync));
-            await policy.ExecuteAsync(async () =>
-            {
-                await OrderingContextSeed.SeedAsync(app, env, loggerFactory);
-            });
-
-        }
-        private Policy CreatePolicy(ILogger logger, int retries, string prefix)
-        {
-            return Policy.Handle<SqlException>()
-                 .WaitAndRetryAsync(
-                 retryCount: retries,
-                 sleepDurationProvider: retry => TimeSpan.FromSeconds(5),
-                 onRetry: (exception, timeSpan, retry, ctx) =>
-                 {
-                     logger.LogTrace($"[{prefix}] Exception {exception.GetType().Name} with message ${exception.Message} detected on attempt {retry} of {retries}");
-                 });
         }
     }
 }

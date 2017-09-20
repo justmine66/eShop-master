@@ -7,6 +7,11 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore;
 using Microsoft.Extensions.Logging;
+using Ordering.Infrastructure;
+using Microsoft.Extensions.Options;
+using Ordering.API.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
+using IntegrationEventLogEF;
 
 namespace Ordering.API
 {
@@ -14,20 +19,31 @@ namespace Ordering.API
     {
         public static void Main(string[] args)
         {
-            BuildWebHost(args).Run();
+            BuildWebHost(args)
+                .MigrateDbContext<OrderingContext>((context, services) =>
+                {
+                    var env = services.GetService<IHostingEnvironment>();
+                    var logger = services.GetService<ILogger<OrderingContextSeed>>();
+                    var settings = services.GetService<IOptions<OrderingSettings>>();
+
+                    new OrderingContextSeed()
+                    .SeedAsync(context, env, settings, logger)
+                    .Wait();
+                })
+                .MigrateDbContext<IntegrationEventLogContext>((_, __) => { })
+                .Run();
         }
 
         public static IWebHost BuildWebHost(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
-            .UseKestrel()
             .UseStartup<Startup>()
             .UseHealthChecks("/hc")
-            .UseContentRoot(Directory.GetCurrentDirectory())
             .ConfigureLogging((hostingContext, builder) =>
             {
                 builder.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
                 builder.AddConsole();
                 builder.AddDebug();
-            }).Build();
+            })
+            .Build();
     }
 }

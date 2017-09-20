@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace Ordering.API.Application.Models
 {
     /// <summary>
-    /// 购物篮子单项信息
+    /// 购物车项信息
     /// </summary>
     public class BasketItem
     {

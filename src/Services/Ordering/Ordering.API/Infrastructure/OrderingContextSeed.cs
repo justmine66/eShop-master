@@ -9,8 +9,10 @@ using Ordering.API.Extensions;
 using Ordering.Domain.AggregatesModel.BuyerAggregate;
 using Ordering.Domain.AggregatesModel.OrderAggregate;
 using Ordering.Infrastructure;
+using Polly;
 using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -29,52 +31,44 @@ namespace Ordering.API.Infrastructure
         /// <param name="env">环境参数</param>
         /// <param name="loggerFactory">日志工厂</param>
         /// <returns></returns>
-        public static async Task SeedAsync(
-            IApplicationBuilder applicationBuilder,
+        public async Task SeedAsync(
+            OrderingContext context,
             IHostingEnvironment env,
-            ILoggerFactory loggerFactory)
+            IOptions<OrderingSettings> settings,
+            ILogger<OrderingContextSeed> logger)
         {
-            var log = loggerFactory.CreateLogger("订单子域数据播种");
+            var policy = CreatePolicy(logger, nameof(OrderingContextSeed));
 
-            var context = applicationBuilder
-                .ApplicationServices.GetService(typeof(OrderingContext)) as OrderingContext;
-            var settings = applicationBuilder
-                .ApplicationServices.GetRequiredService<IOptions<OrderingSettings>>().Value;
-
-            var useCustomizationData = settings.UseCustomizationData;
-            var contentRootPath = env.ContentRootPath;
-
-            using (context)
+            await policy.ExecuteAsync(async () =>
             {
-                context.Database.Migrate();
+                var useCustomizationData = settings.Value.UseCustomizationData;
+                var contentRootPath = env.ContentRootPath;
 
-                //迁移事件溯源上下文
-                var IntegEventLogContext = (IntegrationEventLogContext)applicationBuilder
-               .ApplicationServices.GetService(typeof(IntegrationEventLogContext));
-                IntegEventLogContext.Database.Migrate();
-
-                if (!context.CardTypes.Any())
+                using (context)
                 {
-                    context.CardTypes.AddRange(useCustomizationData
-                                            ? GetCardTypesFromFile(contentRootPath, log)
-                                            : GetPredefinedCardTypes());
+                    if (!context.CardTypes.Any())
+                    {
+                        context.CardTypes.AddRange(useCustomizationData
+                                                ? GetCardTypesFromFile(contentRootPath, logger)
+                                                : GetPredefinedCardTypes());
 
-                    await context.SaveChangesAsync();
+                        await context.SaveChangesAsync();
+                    }
+
+                    if (!context.OrderStatus.Any())
+                    {
+                        context.OrderStatus.AddRange(useCustomizationData
+                                                ? GetOrderStatusFromFile(contentRootPath, logger)
+                                                : GetPredefinedOrderStatuses());
+
+                        await context.SaveChangesAsync();
+                    }
                 }
-
-                if (!context.OrderStatus.Any())
-                {
-                    context.OrderStatus.AddRange(useCustomizationData
-                                            ? GetOrderStatusFromFile(contentRootPath, log)
-                                            : GetPredefinedOrderStatuses());
-                }
-
-                await context.SaveChangesAsync();
-            }
+            });
         }
 
         //从文件获取银行卡类型
-        static IEnumerable<CardType> GetCardTypesFromFile(string contentRootPath, ILogger log)
+        IEnumerable<CardType> GetCardTypesFromFile(string contentRootPath, ILogger log)
         {
             string csvFileCardTypes = Path.Combine(contentRootPath, "Setup", "CardTypes.csv");
 
@@ -103,7 +97,7 @@ namespace Ordering.API.Infrastructure
                                         .Where(x => x != null);
         }
         //创建银行卡类型
-        static CardType CreateCardType(string value, ref int id)
+        CardType CreateCardType(string value, ref int id)
         {
             if (String.IsNullOrEmpty(value))
             {
@@ -113,14 +107,14 @@ namespace Ordering.API.Infrastructure
             return new CardType(id++, value.Trim('"').Trim());
         }
         //获取预定义的银行卡类型
-        private static IEnumerable<CardType> GetPredefinedCardTypes()
+        IEnumerable<CardType> GetPredefinedCardTypes()
         {
             yield return CardType.aPlay;
             yield return CardType.weChat;
             yield return CardType.unionPlay;
         }
         //从文件获取订单状态
-        static IEnumerable<OrderStatus> GetOrderStatusFromFile(string contentRootDir, ILogger logger)
+        IEnumerable<OrderStatus> GetOrderStatusFromFile(string contentRootDir, ILogger logger)
         {
             string csvFile = Path.Combine(contentRootDir, "SetUp", "OrderStatus.csv");
 
@@ -149,7 +143,7 @@ namespace Ordering.API.Infrastructure
                 .Where(i => i != null);
         }
         //创建订单状态
-        static OrderStatus CreateOrderStatus(string value, ref int id)
+        OrderStatus CreateOrderStatus(string value, ref int id)
         {
             if (String.IsNullOrEmpty(value))
             {
@@ -159,7 +153,7 @@ namespace Ordering.API.Infrastructure
             return new OrderStatus(id++, value.Trim('"').Trim().ToLowerInvariant());
         }
         //获取预定义的订单状态集合
-        static IEnumerable<OrderStatus> GetPredefinedOrderStatuses()
+        IEnumerable<OrderStatus> GetPredefinedOrderStatuses()
         {
             yield return OrderStatus.Submitted;
             yield return OrderStatus.AwaitingValidation;
@@ -169,7 +163,7 @@ namespace Ordering.API.Infrastructure
             yield return OrderStatus.Cancelled;
         }
         //获取列头
-        static string[] GetHeaders(string[] requiredHeaders, string csvFile)
+        string[] GetHeaders(string[] requiredHeaders, string csvFile)
         {
             string[] csvHeaders = File.ReadLines(csvFile).FirstOrDefault().ToLowerInvariant().Split(",");
 
@@ -187,6 +181,19 @@ namespace Ordering.API.Infrastructure
             }
 
             return csvHeaders;
+        }
+
+        //创建重试策略
+        Policy CreatePolicy(ILogger logger, string prefix, int retries = 3)
+        {
+            return Policy.Handle<SqlException>()
+                 .WaitAndRetryAsync(
+                 retryCount: retries,
+                 sleepDurationProvider: retry => TimeSpan.FromSeconds(5),
+                 onRetry: (exception, timeSpan, retry, ctx) =>
+                 {
+                     logger.LogTrace($"[{prefix}] Exception {exception.GetType().Name} with message ${exception.Message} detected on attempt {retry} of {retries}");
+                 });
         }
     }
 }
