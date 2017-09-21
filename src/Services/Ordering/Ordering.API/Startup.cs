@@ -71,26 +71,27 @@ namespace Ordering.API
                 }
                 checks.AddSqlCheck("OrderingDb", Configuration["ConnectionString"], TimeSpan.FromMinutes(minutes));
             });
-            // 注册EFCore服务
+            // 注册EFCore SqlServer服务
             services.AddEntityFrameworkSqlServer()
                 .AddDbContext<OrderingContext>(options =>
                 {
                     options.UseSqlServer(Configuration["ConnectionString"],
                         sqlServerOptionsAction: sqlOptions =>
                          {
-                             sqlOptions.MigrationsAssembly(typeof(Startup).GetType().Assembly.GetName().Name);
+                             sqlOptions.MigrationsAssembly("Ordering.API");
                              sqlOptions.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
                          });
-                }, ServiceLifetime.Scoped)
+                })
                 .AddDbContext<IntegrationEventLogContext>(options =>
                 {
                     options.UseSqlServer(Configuration["ConnectionString"],
                          sqlServerOptionsAction: sqlOptions =>
                          {
-                             sqlOptions.MigrationsAssembly(typeof(Startup).GetType().Assembly.GetName().Name);
+                             sqlOptions.MigrationsAssembly("Ordering.API");
                              sqlOptions.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
                          });
-                }, ServiceLifetime.Scoped);
+                });
+
             // 注册配置服务
             services.Configure<OrderingSettings>(Configuration);
             services.AddOptions();
@@ -99,7 +100,7 @@ namespace Ordering.API
             {
                 options.DescribeAllEnumsAsStrings();
 
-                options.SwaggerDoc("v1", new Swashbuckle.AspNetCore.Swagger.Info()
+                options.SwaggerDoc("v1", new Info()
                 {
                     Version = "1.0",
                     Title = "eshop - Ordering Http Api",
