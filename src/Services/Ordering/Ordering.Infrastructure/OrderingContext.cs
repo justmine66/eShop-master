@@ -32,15 +32,15 @@ namespace Ordering.Infrastructure
         public DbSet<CardType> CardTypes { get; set; }
 
         private readonly IMediator _mediator;
-        public OrderingContext(DbContextOptions options) : base(options) { }
-        public OrderingContext(DbContextOptions options, IMediator mediator)
+        public OrderingContext(DbContextOptions<OrderingContext> options) : base(options) { }
+        public OrderingContext(DbContextOptions<OrderingContext> options, IMediator mediator)
             : base(options)
         {
             this._mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
 
             System.Diagnostics.Debug.WriteLine("OrderingContext::ctor ->" + this.GetHashCode());
         }
-        public static OrderingContext CreateForEFDesignTools(DbContextOptions options)
+        public static OrderingContext CreateForEFDesignTools(DbContextOptions<OrderingContext> options)
         {
             return new OrderingContext(options);
         }

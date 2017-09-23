@@ -9,7 +9,7 @@ using System.Linq;
 namespace Ordering.Infrastructure
 {
     /// <summary>
-    /// Mediator扩展类
+    /// Mediator 扩展类
     /// </summary>
     static class MediatorExtension
     {

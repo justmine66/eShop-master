@@ -15,7 +15,7 @@ namespace Ordering.Infrastructure.Repositories
         : IOrderRepository
     {
         private readonly OrderingContext _context;//数据库上下文
-        public IUnitOfWork UnitOfWork => throw new NotImplementedException();//统一工作单元
+        public IUnitOfWork UnitOfWork => this._context;//统一工作单元
 
         /// <summary>
         /// 初始化一个订单仓储实例
