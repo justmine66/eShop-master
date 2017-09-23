@@ -22,12 +22,6 @@ namespace Ordering.API
             .UseKestrel()
             .UseStartup<Startup>()
             .UseHealthChecks("/hc")
-            .UseContentRoot(Directory.GetCurrentDirectory())
-            .ConfigureLogging((hostingContext, builder) =>
-            {
-                builder.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
-                builder.AddConsole();
-                builder.AddDebug();
-            }).Build();
+            .Build();
     }
 }

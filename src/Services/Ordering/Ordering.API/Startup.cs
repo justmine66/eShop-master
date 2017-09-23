@@ -36,6 +36,8 @@ using System.Reflection;
 using IntegrationEventLogEF;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Ordering.API.Application.IntegrationEvents.Events;
+using Microsoft.AspNetCore.Builder.Internal;
+using Microsoft.AspNetCore.Hosting.Builder;
 
 namespace Ordering.API
 {
@@ -206,7 +208,7 @@ namespace Ordering.API
             // 等待数据库可用
             WaitForSqlAvailabilityAsync(loggerFactory, app, env).Wait();
             // 配置事件总线，添加事件订阅信息。
-            ConfigEventBus(app);
+            ConfigEventBus(app); 
         }
 
         private void ConfigEventBus(IApplicationBuilder app)
@@ -244,7 +246,7 @@ namespace Ordering.API
             }).AddJwtBearer(options =>
             {
                 options.Authority = identityUrl;
-                options.RequireHttpsMetadata = false;//开发环境中禁用Https
+                options.RequireHttpsMetadata = false;//开发环境中先禁用Https
                 options.Audience = "orders";
             });
         }
