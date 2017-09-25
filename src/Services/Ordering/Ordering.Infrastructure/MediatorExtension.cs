@@ -21,15 +21,15 @@ namespace Ordering.Infrastructure
         /// <returns></returns>
         public static async Task DispatchDomainEventAsync(this IMediator mediator, OrderingContext ctx)
         {
-            //获取领域实体集合
+            //获取订单子域所有的领域实体
             var domainEntities = ctx.ChangeTracker
                 .Entries<Entity>()
                 .Where(x => x.Entity.DomainEvents != null && x.Entity.DomainEvents.Any());
-            //提取所有领域事件集合
+            //合并所有领域实体的领域事件
             var domainEvents = domainEntities
                 .SelectMany(x => x.Entity.DomainEvents)
                 .ToList();
-            //清空实体的领域事件列表
+            //清空所有实体的领域事件列表
             domainEntities.ToList()
                 .ForEach(entity => entity.Entity.DomainEvents.Clear());
             //发布所有领域事件

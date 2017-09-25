@@ -21,7 +21,7 @@ namespace Ordering.Infrastructure
     public class OrderingContext
         : DbContext, IUnitOfWork
     {
-        public const string DEFAULT_SCHEMA = "ordering";//数据库默认架构--订单域
+        public const string DEFAULT_SCHEMA = "ordering";//订单子域--数据库默认架构
 
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
@@ -63,9 +63,9 @@ namespace Ordering.Infrastructure
         /// <returns>是否保存成功</returns>
         public async Task<bool> SaveEntitiesAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            //001 发布领域事件
+            //001 发布领域事件(最终一致性)
             await this._mediator.DispatchDomainEventAsync(this);
-            //002 保存数据变化
+            //002 持久化数据到数据库
             var result = await base.SaveChangesAsync();
 
             return true;
