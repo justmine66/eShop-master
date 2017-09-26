@@ -29,7 +29,7 @@ namespace Ordering.Infrastructure
             var domainEvents = domainEntities
                 .SelectMany(x => x.Entity.DomainEvents)
                 .ToList();
-            //清空所有实体的领域事件列表
+            //清空所有实体的领域事件列表(非常重要)
             domainEntities.ToList()
                 .ForEach(entity => entity.Entity.DomainEvents.Clear());
             //发布所有领域事件
