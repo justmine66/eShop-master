@@ -44,7 +44,7 @@ namespace Ordering.Domain.AggregatesModel.OrderAggregate
                 throw new OrderingDomainException("Invalid numbers of units");
             }
 
-            if ((unitPrice * units) < discount)//商品总额小于折扣
+            if ((unitPrice * units) < discount)//订单项总额小于折扣
             {
                 throw new OrderingDomainException("The total of order item is lower than applied discount");
             }
@@ -106,6 +106,16 @@ namespace Ordering.Domain.AggregatesModel.OrderAggregate
         {
             return this._units;
         }
+
+        /// <summary>
+        /// 获取单价
+        /// </summary>
+        /// <returns></returns>
+        public decimal GetUnitPrice()
+        {
+            return this._unitPrice;
+        }
+
         /// <summary>
         /// 添加购买数量
         /// </summary>

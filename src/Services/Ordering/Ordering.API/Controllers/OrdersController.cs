@@ -45,7 +45,7 @@ namespace Ordering.API.Controllers
         // GET api/v1/Orders
         [Route("")]
         [HttpGet]
-        public async Task<IActionResult> GetOrdersAsync(int orderId)
+        public async Task<IActionResult> GetOrdersAsync()
         {
             try
             {

@@ -51,7 +51,7 @@ namespace Ordering.Domain.AggregatesModel.OrderAggregate
         /// <param name="paymentMethodId">支付方式</param>
         public Order(string userId,
             Address address,
-            int cardTypeId,string cardNumber,string cardSecurityNumber,string cardHolderName,DateTime cardExpiration,
+            int cardTypeId, string cardNumber, string cardSecurityNumber, string cardHolderName, DateTime cardExpiration,
             int? buyerId = null,
             int? paymentMethodId = null)
         {
@@ -216,6 +216,11 @@ namespace Ordering.Domain.AggregatesModel.OrderAggregate
 
             var itemsStockRejectedDescription = string.Join(",", itemsStockRejectedProductNames);
             this._description = $"The product items don't have stock:{itemsStockRejectedDescription}";
+        }
+
+        public decimal GetTotal()
+        {
+            return this.OrderItems.Sum(o => o.GetUnits() * o.GetUnitPrice());
         }
 
         //添加订单创建领域事件

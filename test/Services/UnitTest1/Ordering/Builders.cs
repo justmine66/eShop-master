@@ -20,12 +20,12 @@ namespace UnitTest.Ordering
         public OrderBuilder(Address address)
         {
             this.order = new Order(
-                 userId: "testUserId" + new Random().Next(1, 1000),
+                 userId: "userId" + new Random().Next(1, 1000),
                  address: address,
                  cardTypeId: 2,
                  cardNumber: "60021042300156",
                  cardSecurityNumber: new Random().Next(100000, 999999).ToString(),
-                 cardHolderName: "用于测试的持卡人",
+                 cardHolderName: "张三",
                  cardExpiration: DateTime.UtcNow.AddDays(1),
                  buyerId: 1,
                  paymentMethodId: 1);

@@ -28,14 +28,7 @@ namespace Ordering.Infrastructure.Repositories
 
         public Order Add(Order order)
         {
-            if (!order.IsTransient())
-            {
-                return this._context.Add<Order>(order).Entity;
-            }
-            else
-            {
-                return order;
-            }
+            return this._context.Add<Order>(order).Entity;
         }
 
         public async Task<Order> GetAsync(int orderId)
