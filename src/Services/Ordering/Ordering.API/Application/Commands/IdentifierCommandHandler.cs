@@ -8,12 +8,13 @@ using Ordering.Infrastructure.Idempotency;
 namespace Ordering.API.Application.Commands
 {
     /// <summary>
-    /// 处理重复的请求，确保幂等性，一个基本的实现
+    /// 幂等命令处理器
+    /// 说明：对于重复的请求，确保命令消费的幂等性。
     /// </summary>
-    /// <typeparam name="T">未重复请求的命令处理类型</typeparam>
-    /// <typeparam name="R">内部命令处理的返回值</typeparam>
-    public class IdentifierCommandHandler<T, R> : IAsyncRequestHandler<IdentifiedCommand<T, R>, R>
-        where T : IRequest<R>
+    /// <typeparam name="TCommand">幂等命令</typeparam>
+    /// <typeparam name="TResult">响应结果</typeparam>
+    public class IdentifierCommandHandler<TCommand, TResult> : IAsyncRequestHandler<IdentifiedCommand<TCommand, TResult>, TResult>
+        where TCommand : IRequest<TResult>
     {
         private readonly IMediator _mediator;
         private readonly IRequestManager _requestManager;
@@ -25,26 +26,31 @@ namespace Ordering.API.Application.Commands
         }
 
         /// <summary>
-        /// 为重复的请求创建结果
+        /// 为重复的请求创建响应结果
         /// </summary>
-        /// <returns></returns>
-        protected virtual R CreateResultForDuplicateRequest()
+        /// <returns>响应结果</returns>
+        protected virtual TResult CreateResultForDuplicateRequest()
         {
-            return default(R);
+            return default(TResult);
         }
 
-        public async Task<R> Handle(IdentifiedCommand<T, R> message)
+        /// <summary>
+        /// 处理幂等命令
+        /// </summary>
+        /// <param name="message">幂等命令</param>
+        /// <returns></returns>
+        public async Task<TResult> Handle(IdentifiedCommand<TCommand, TResult> identifiedCommand)
         {
-            var alreadyExists = await _requestManager.ExistAsync(message.Id);
+            var alreadyExists = await _requestManager.ExistAsync(identifiedCommand.Id);
             if (alreadyExists)
             {
                 return this.CreateResultForDuplicateRequest();
             }
             else
             {
-                await _requestManager.CreateRequestForCommandAsync<T>(message.Id);
+                await _requestManager.CreateRequestForCommandAsync<TCommand>(identifiedCommand.Id);
 
-                var result =await this._mediator.Send(message.Command);
+                var result = await this._mediator.Send(identifiedCommand.Command);
 
                 return result;
             }

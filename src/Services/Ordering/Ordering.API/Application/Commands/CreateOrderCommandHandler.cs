@@ -9,6 +9,9 @@ using Ordering.Infrastructure.Idempotency;
 
 namespace Ordering.API.Application.Commands
 {
+    /// <summary>
+    /// 创建订单幂等命令处理
+    /// </summary>
     public class CreateOrderCommandIdentifiedHandler : IdentifierCommandHandler<CreateOrderCommand, bool>
     {
         public CreateOrderCommandIdentifiedHandler(IMediator mediator, IRequestManager requestManager) 

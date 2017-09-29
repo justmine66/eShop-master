@@ -110,7 +110,8 @@ namespace Ordering.API.Application.Commands
         /// <param name="cardExpiration">银行卡过期时间</param>
         /// <param name="cardSecurityNumber">支付密码</param>
         /// <param name="cardTypeId">银行卡类型标识</param>
-        public CreateOrderCommand(List<BasketItem> basketItems, string userId, string city, string street, string state, string country, string zipcode,
+        public CreateOrderCommand(List<BasketItem> basketItems, 
+            string userId, string city, string street, string state, string country, string zipcode,
             string cardNumber, string cardHolderName, DateTime cardExpiration,
             string cardSecurityNumber, int cardTypeId) : this()
         {
