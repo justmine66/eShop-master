@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\BuildingBlocks\EventBus\EventBus\EventBus.csproj" />
+    <ProjectReference Include="..\..\..\src\Services\Identity\Identity.API\Identity.API.csproj" />
     <ProjectReference Include="..\..\..\src\Services\Ordering\Ordering.API\Ordering.API.csproj" />
     <ProjectReference Include="..\..\..\src\Services\Ordering\Ordering.Domain\Ordering.Domain.csproj" />
     <ProjectReference Include="..\..\..\src\Services\Ordering\Ordering.Infrastructure\Ordering.Infrastructure.csproj" />
@@ -23,7 +24,6 @@
 
   <ItemGroup>
     <Folder Include="Catalog\Application\" />
-    <Folder Include="Account\" />
   </ItemGroup>
 
   <ItemGroup>
