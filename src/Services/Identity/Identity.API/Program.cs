@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore;
 
 namespace Identity.API
 {
@@ -22,5 +23,17 @@ namespace Identity.API
 
             host.Run();
         }
+
+        public static IWebHost BuildWebHost(string[] args) =>
+           WebHost.CreateDefaultBuilder(args)
+            .UseKestrel()
+            .UseHealthChecks("/hc")
+            .UseContentRoot(Directory.GetCurrentDirectory())
+            .UseIISIntegration()
+            .UseStartup<Startup>()
+            .ConfigureLogging((hostContext,logBuilder)=>{
+                
+            })
+            .Build();
     }
 }

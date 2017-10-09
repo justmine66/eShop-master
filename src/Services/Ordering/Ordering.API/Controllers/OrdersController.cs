@@ -31,9 +31,9 @@ namespace Ordering.API.Controllers
         {
             try
             {
-                var order =await this._orderQueries
+                var order = await this._orderQueries
                     .GetOrderAsync(orderId);
-                
+
                 return Ok(order);
             }
             catch (KeyNotFoundException)
