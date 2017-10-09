@@ -29,7 +29,7 @@ namespace UnitTest.Ordering.Application
         {
             this._orderRepositoryMock = new Mock<IOrderRepository>();
             this._identityServiceMock = new Mock<IIdentityService>();
-            this._mediator = new Mock<IMediator>();
+            this._mediatorMock = new Mock<IMediator>();
         }
 
         [Fact]
