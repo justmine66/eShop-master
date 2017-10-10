@@ -1,11 +1,13 @@
-﻿// Copyright (c) Brock Allen & Dominick Baier. All rights reserved.
-// Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
-
-
-namespace Identity.API.Models.AccountViewModels
+﻿namespace Identity.API.Models.AccountViewModels
 {
+    /// <summary>
+    /// 注销视图模型
+    /// </summary>
     public class LogoutViewModel
     {
+        /// <summary>
+        /// 注销标识
+        /// </summary>
         public string LogoutId { get; set; }
     }
 }

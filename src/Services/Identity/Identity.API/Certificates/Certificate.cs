@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Linq;
 
-namespace Identity.API.Certificate
+namespace Identity.API.Certificates
 {
     /// <summary>
     /// 证书

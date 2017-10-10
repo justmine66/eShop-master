@@ -22,7 +22,9 @@ namespace Identity.API.Services
             var decodedUrl = System.Net.WebUtility.HtmlDecode(url);
             var results = Regex.Split(decodedUrl, "redirect_uri=");
             if (results.Length < 2)
-                return "";
+            {
+                return string.Empty;
+            }
 
             result = results[1];
 

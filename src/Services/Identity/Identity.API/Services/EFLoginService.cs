@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
 
 namespace Identity.API.Services
 {
@@ -12,14 +13,14 @@ namespace Identity.API.Services
     /// </summary>
     public class EFLoginService : ILoginService<ApplicationUser>
     {
-        UserManager<ApplicationUser> _userManager;
-        SignInManager<ApplicationUser> _signInManager;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
 
         public EFLoginService(UserManager<ApplicationUser> userManager
             , SignInManager<ApplicationUser> signInManager)
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
+            this._userManager = userManager;
+            this._signInManager = signInManager;
         }
 
         /// <summary>
@@ -27,9 +28,9 @@ namespace Identity.API.Services
         /// </summary>
         /// <param name="user">用户名</param>
         /// <returns>用户对象</returns>
-        public async Task<ApplicationUser> FindByUsername(string user)
+        public async Task<ApplicationUser> FindByUsernameAsync(string user)
         {
-            return await _userManager.FindByEmailAsync(user);
+            return await this._userManager.FindByEmailAsync(user);
         }
 
         /// <summary>
@@ -38,9 +39,9 @@ namespace Identity.API.Services
         /// <param name="user">用户对象</param>
         /// <param name="password">密码</param>
         /// <returns></returns>
-        public async Task<bool> ValidateCredentials(ApplicationUser user, string password)
+        public async Task<bool> ValidateCredentialsAsync(ApplicationUser user, string password)
         {
-            return await _userManager.CheckPasswordAsync(user, password);
+            return await this._userManager.CheckPasswordAsync(user, password);
         }
 
         /// <summary>
@@ -48,9 +49,14 @@ namespace Identity.API.Services
         /// </summary>
         /// <param name="user">用户对象</param>
         /// <returns></returns>
-        public Task SignIn(ApplicationUser user)
+        public Task SignInAsync(ApplicationUser user)
         {
-            return _signInManager.SignInAsync(user, true);
+            return this._signInManager.SignInAsync(user, true);
+        }
+
+        public Task SignInAsync(ApplicationUser user, AuthenticationProperties authenticationProperties)
+        {
+            return this._signInManager.SignInAsync(user, authenticationProperties);
         }
     }
 }

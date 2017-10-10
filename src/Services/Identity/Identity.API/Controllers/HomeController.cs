@@ -1,15 +1,12 @@
-﻿// Copyright (c) Brock Allen & Dominick Baier. All rights reserved.
-// Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
-
-using Identity.API.Services;
-using IdentityServer4.Quickstart.UI.Models;
+﻿using Identity.API.Services;
 using IdentityServer4.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using System.Threading.Tasks;
 using Identity.API;
+using Identity.API.Models;
 
-namespace IdentityServer4.Quickstart.UI.Controllers
+namespace Identity.API.Controllers
 {
     public class HomeController : Controller
     {
@@ -17,11 +14,14 @@ namespace IdentityServer4.Quickstart.UI.Controllers
         private readonly IOptionsSnapshot<AppSettings> _settings;
         private readonly IRedirectService _redirectSvc;
 
-        public HomeController(IIdentityServerInteractionService interaction, IOptionsSnapshot<AppSettings> settings,IRedirectService redirectSvc)
+        public HomeController(
+            IIdentityServerInteractionService interaction,
+            IOptionsSnapshot<AppSettings> settings,
+            IRedirectService redirectSvc)
         {
-            _interaction = interaction;
-            _settings = settings;
-            _redirectSvc = redirectSvc;
+            this._interaction = interaction;
+            this._settings = settings;
+            this._redirectSvc = redirectSvc;
         }
 
         public IActionResult Index(string returnUrl)

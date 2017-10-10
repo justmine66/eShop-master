@@ -9,11 +9,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using IdentityServer4.Models;
 using IdentityServer4.Stores;
-using IdentityServer4.Quickstart.UI.Models;
 using Identity.API.Models.AccountViewModels;
 using Identity.API.Services;
 
-namespace IdentityServer4.Quickstart.UI.Controllers
+namespace Identity.API.Controllers
 {
     /// <summary>
     /// This controller implements the consent logic
@@ -24,7 +23,6 @@ namespace IdentityServer4.Quickstart.UI.Controllers
         private readonly IClientStore _clientStore;
         private readonly IResourceStore _resourceStore;
         private readonly IIdentityServerInteractionService _interaction;
-
         
         public ConsentController(
             ILogger<ConsentController> logger,
@@ -32,10 +30,10 @@ namespace IdentityServer4.Quickstart.UI.Controllers
             IClientStore clientStore,
             IResourceStore resourceStore)
         {
-            _logger = logger;
-            _interaction = interaction;
-            _clientStore = clientStore;
-            _resourceStore = resourceStore;
+            this._logger = logger;
+            this._interaction = interaction;
+            this._clientStore = clientStore;
+            this._resourceStore = resourceStore;
         }
 
         /// <summary>
@@ -111,13 +109,13 @@ namespace IdentityServer4.Quickstart.UI.Controllers
 
             return View("Error");
         }
-
+        //构建视图模型
         async Task<ConsentViewModel> BuildViewModelAsync(string returnUrl, ConsentInputModel model = null)
         {
-            var request = await _interaction.GetAuthorizationContextAsync(returnUrl);
+            var request = await this._interaction.GetAuthorizationContextAsync(returnUrl);
             if (request != null)
             {
-                var client = await _clientStore.FindEnabledClientByIdAsync(request.ClientId);
+                var client = await this._clientStore.FindEnabledClientByIdAsync(request.ClientId);
                 if (client != null)
                 {
                     var resources = await _resourceStore.FindEnabledResourcesByScopeAsync(request.ScopesRequested);

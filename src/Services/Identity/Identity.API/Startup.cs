@@ -20,32 +20,23 @@ using System.Collections.Generic;
 using IdentityServer4.EntityFramework.DbContexts;
 using System.Linq;
 using Microsoft.AspNetCore.Identity;
+using Identity.API.Certificates;
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
 
 namespace Identity.API
 {
     public class Startup
     {
-        public Startup(IHostingEnvironment env)
+        public Startup(IConfiguration configuration)
         {
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(env.ContentRootPath)
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true);
-
-            if (env.IsDevelopment())
-            {
-                // For more details on using the user secret store see https://go.microsoft.com/fwlink/?LinkID=532709
-                builder.AddUserSecrets<Startup>();
-            }
-
-            builder.AddEnvironmentVariables();
-            Configuration = builder.Build();
+            this.Configuration = configuration;
         }
 
-        public IConfigurationRoot Configuration { get; }
+        public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
+        public IServiceProvider ConfigureServices(IServiceCollection services)
         {
             // Add framework services.
             services.AddDbContext<ApplicationDbContext>(options =>
@@ -53,7 +44,8 @@ namespace Identity.API
 
             services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
-                .AddDefaultTokenProviders();
+                .AddDefaultTokenProviders()
+                .AddIdentityServer();
 
             services.Configure<AppSettings>(Configuration);
 
@@ -90,15 +82,24 @@ namespace Identity.API
 
             // Adds IdentityServer
             services.AddIdentityServer(x => x.IssuerUri = "null")
-                .AddSigningCredential(Certificate.Certificate.Get())
+                .AddSigningCredential(Certificate.Get())
                 .AddAspNetIdentity<ApplicationUser>()
-                .AddConfigurationStore(builder =>
-                    builder.UseSqlServer(connectionString, options =>
-                        options.MigrationsAssembly(migrationsAssembly)))
-                .AddOperationalStore(builder =>
-                    builder.UseSqlServer(connectionString, options =>
-                        options.MigrationsAssembly(migrationsAssembly)))
+                .AddConfigurationStore(options =>
+                {
+                    options.ConfigureDbContext = builder => builder.UseSqlServer(connectionString, opts =>
+                        opts.MigrationsAssembly(migrationsAssembly));
+                })
+                .AddOperationalStore(options =>
+                {
+                    options.ConfigureDbContext = builder => builder.UseSqlServer(connectionString, opts =>
+                         opts.MigrationsAssembly(migrationsAssembly));
+                })
                 .Services.AddTransient<IProfileService, ProfileService>();
+
+            var container = new ContainerBuilder();
+            container.Populate(services);
+
+            return new AutofacServiceProvider(container.Build());
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -118,6 +119,13 @@ namespace Identity.API
                 app.UseExceptionHandler("/Home/Error");
             }
 
+            var pathBase = Configuration["PATH_BASE"];
+            if (!string.IsNullOrEmpty(pathBase))
+            {
+                loggerFactory.CreateLogger("init").LogDebug($"Using PATH BASE '{pathBase}'");
+                app.UsePathBase(pathBase);
+            }
+
             app.UseStaticFiles();
 
             // Make work identity server redirections in Edge and lastest versions of browers. WARN: Not valid in a production environment.
@@ -127,76 +135,18 @@ namespace Identity.API
                 await next();
             });
 
-            app.UseCookieAuthentication(new CookieAuthenticationOptions
-            {
-                AuthenticationScheme = "idsrv", // Matches the name it's looking for in the exception
-                AutomaticAuthenticate = true,
-                AutomaticChallenge = true
-            });
-
-            app.UseIdentity();
+            app.UseAuthentication();
 
             // Adds IdentityServer
             app.UseIdentityServer();
 
             // Add external authentication middleware below. To configure them please see https://go.microsoft.com/fwlink/?LinkID=532715
-
             app.UseMvc(routes =>
             {
                 routes.MapRoute(
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
-
-            // Store idsrv grant config into db
-            InitializeGrantStoreAndConfiguration(app).Wait();
-
-            //Seed Data
-            var hasher = new PasswordHasher<ApplicationUser>();
-            new ApplicationContextSeed(hasher).SeedAsync(app, loggerFactory).Wait();
-        }
-
-        private async Task InitializeGrantStoreAndConfiguration(IApplicationBuilder app)
-        {
-            //callbacks urls from config:
-            Dictionary<string, string> clientUrls = new Dictionary<string, string>();
-            clientUrls.Add("Mvc", Configuration.GetValue<string>("MvcClient"));
-            clientUrls.Add("Spa", Configuration.GetValue<string>("SpaClient"));
-            clientUrls.Add("Xamarin", Configuration.GetValue<string>("XamarinCallback"));
-
-            using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
-            {
-                serviceScope.ServiceProvider.GetRequiredService<PersistedGrantDbContext>().Database.Migrate();
-                var context = serviceScope.ServiceProvider.GetRequiredService<ConfigurationDbContext>();
-                context.Database.Migrate();
-
-                if (!context.Clients.Any())
-                {
-                    foreach (var client in Config.GetClients(clientUrls))
-                    {
-                        await context.Clients.AddAsync(client.ToEntity());
-                    }
-                    await context.SaveChangesAsync();
-                }
-
-                if (!context.IdentityResources.Any())
-                {
-                    foreach (var resource in Config.GetResources())
-                    {
-                        await context.IdentityResources.AddAsync(resource.ToEntity());
-                    }
-                    await context.SaveChangesAsync();
-                }
-
-                if (!context.ApiResources.Any())
-                {
-                    foreach (var api in Config.GetApis())
-                    {
-                        await context.ApiResources.AddAsync(api.ToEntity());
-                    }
-                    await context.SaveChangesAsync();
-                }
-            }
         }
     }
 }

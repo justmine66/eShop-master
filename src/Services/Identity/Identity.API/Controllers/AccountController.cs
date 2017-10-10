@@ -3,9 +3,7 @@
 
 
 using IdentityModel;
-using IdentityServer4.Quickstart.UI.Models;
 using IdentityServer4.Services;
-using Microsoft.AspNetCore.Http.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -22,8 +20,9 @@ using Microsoft.AspNetCore.Authorization;
 using Identity.API.Models.AccountViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication;
+using IdentityServer4;
 
-namespace IdentityServer4.Quickstart.UI.Controllers
+namespace Identity.API.Controllers
 {
     /// <summary>
     /// This sample controller implements a typical login/logout/provision workflow for local and external accounts.
@@ -32,30 +31,25 @@ namespace IdentityServer4.Quickstart.UI.Controllers
     /// </summary>
     public class AccountController : Controller
     {
-        //private readonly InMemoryUserLoginService _loginService;
-        private readonly ILoginService<ApplicationUser> _loginService;
-        private readonly IIdentityServerInteractionService _interaction;
-        private readonly IClientStore _clientStore;
-        private readonly ILogger _logger;
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly ILoginService<ApplicationUser> _loginService;//登录服务
+        private readonly IIdentityServerInteractionService _interaction;//IdentityServer交互服务
+        private readonly IClientStore _clientStore;//客户端存储
+        private readonly ILogger _logger;//日志器
+        private readonly UserManager<ApplicationUser> _userManager;//用户管理
 
         public AccountController(
-            
-            //InMemoryUserLoginService loginService,
             ILoginService<ApplicationUser> loginService,
             IIdentityServerInteractionService interaction,
             IClientStore clientStore,
-            ILoggerFactory loggerFactory, 
+            ILoggerFactory loggerFactory,
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager)
         {
-            _loginService = loginService;
-            _interaction = interaction;
-            _clientStore = clientStore;
-            _logger = loggerFactory.CreateLogger<AccountController>();
-            _userManager = userManager;
-            _signInManager = signInManager;
+            this._loginService = loginService;
+            this._interaction = interaction;
+            this._clientStore = clientStore;
+            this._logger = loggerFactory.CreateLogger<AccountController>();
+            this._userManager = userManager;
         }
 
         /// <summary>
@@ -64,14 +58,15 @@ namespace IdentityServer4.Quickstart.UI.Controllers
         [HttpGet]
         public async Task<IActionResult> Login(string returnUrl)
         {
-            var context = await _interaction.GetAuthorizationContextAsync(returnUrl);
-            if (context?.IdP != null)
+            //获取授权上下文
+            AuthorizationRequest context = await _interaction.GetAuthorizationContextAsync(returnUrl);
+            if (context?.IdP != null)//第三方登录
             {
                 // if IdP is passed, then bypass showing the login screen
                 return ExternalLogin(context.IdP, returnUrl);
             }
 
-            var vm = await BuildLoginViewModelAsync(returnUrl, context);
+            var vm = await this.BuildLoginViewModelAsync(returnUrl, context);
             ViewData["ReturnUrl"] = returnUrl;
 
             return View(vm);
@@ -86,20 +81,20 @@ namespace IdentityServer4.Quickstart.UI.Controllers
         {
             if (ModelState.IsValid)
             {
-                var user = await _loginService.FindByUsername(model.Email);
-                if (await _loginService.ValidateCredentials(user, model.Password))
+                var user = await _loginService.FindByUsernameAsync(model.Email);
+                if (await _loginService.ValidateCredentialsAsync(user, model.Password))
                 {
-                     AuthenticationProperties props = null;
+                    AuthenticationProperties props = null;
                     if (model.RememberMe)
                     {
                         props = new AuthenticationProperties
                         {
                             IsPersistent = true,
-                            ExpiresUtc = DateTimeOffset.UtcNow.AddYears(10)
+                            ExpiresUtc = DateTimeOffset.UtcNow.AddYears(10)//过期时间10年
                         };
                     };
 
-                    await _loginService.SignIn(user);
+                    await _loginService.SignInAsync(user, props);
                     // make sure the returnUrl is still valid, and if yes - redirect back to authorize endpoint
                     if (_interaction.IsValidReturnUrl(model.ReturnUrl))
                     {
@@ -118,12 +113,13 @@ namespace IdentityServer4.Quickstart.UI.Controllers
             return View(vm);
         }
 
+        //构建登录视图模型
         async Task<LoginViewModel> BuildLoginViewModelAsync(string returnUrl, AuthorizationRequest context)
         {
             var allowLocal = true;
             if (context?.ClientId != null)
             {
-                var client = await _clientStore.FindEnabledClientByIdAsync(context.ClientId);
+                Client client = await _clientStore.FindEnabledClientByIdAsync(context.ClientId);
                 if (client != null)
                 {
                     allowLocal = client.EnableLocalLogin;
@@ -136,11 +132,10 @@ namespace IdentityServer4.Quickstart.UI.Controllers
                 Email = context?.LoginHint,
             };
         }
-
         async Task<LoginViewModel> BuildLoginViewModelAsync(LoginViewModel model)
         {
-            var context = await _interaction.GetAuthorizationContextAsync(model.ReturnUrl);
-            var vm = await BuildLoginViewModelAsync(model.ReturnUrl, context);
+            AuthorizationRequest context = await _interaction.GetAuthorizationContextAsync(model.ReturnUrl);
+            LoginViewModel vm = await BuildLoginViewModelAsync(model.ReturnUrl, context);
             vm.Email = model.Email;
             vm.RememberMe = model.RememberMe;
             return vm;
@@ -159,7 +154,7 @@ namespace IdentityServer4.Quickstart.UI.Controllers
             }
 
             //Test for Xamarin. 
-            var context = await _interaction.GetLogoutContextAsync(logoutId);
+            LogoutRequest context = await _interaction.GetLogoutContextAsync(logoutId);
             if (context?.ShowSignoutPrompt == false)
             {
                 //it's safe to automatically sign-out
@@ -183,6 +178,7 @@ namespace IdentityServer4.Quickstart.UI.Controllers
         public async Task<IActionResult> Logout(LogoutViewModel model)
         {
             var idp = User?.FindFirst(JwtClaimTypes.IdentityProvider)?.Value;
+
             if (idp != null && idp != IdentityServerConstants.LocalIdentityProvider)
             {
                 if (model.LogoutId == null)
@@ -197,21 +193,21 @@ namespace IdentityServer4.Quickstart.UI.Controllers
                 try
                 {
                     // hack: try/catch to handle social providers that throw
-                    await HttpContext.Authentication.SignOutAsync(idp, new AuthenticationProperties { RedirectUri = url });
+                    await HttpContext.SignOutAsync(idp, new AuthenticationProperties { RedirectUri = url });
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     _logger.LogCritical(ex.Message);
                 }
             }
 
-            // delete authentication cookie
-            await HttpContext.Authentication.SignOutAsync();
+            //delete authentication cookie
+            await HttpContext.SignOutAsync();
 
-            // set this so UI rendering sees an anonymous user
+            //set this so UI rendering sees an anonymous user
             HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity());
 
-            // get context information (client name, post logout redirect URI and iframe for federated signout)
+            //get context information(client name, post logout redirect URI and iframe for federated signout)
             var logout = await _interaction.GetLogoutContextAsync(model.LogoutId);
 
             return Redirect(logout?.PostLogoutRedirectUri);
@@ -220,7 +216,7 @@ namespace IdentityServer4.Quickstart.UI.Controllers
         public async Task<IActionResult> DeviceLogOut(string redirectUrl)
         {
             // delete authentication cookie
-            await HttpContext.Authentication.SignOutAsync();
+            await HttpContext.SignOutAsync();
 
             // set this so UI rendering sees an anonymous user
             HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity());
@@ -243,7 +239,7 @@ namespace IdentityServer4.Quickstart.UI.Controllers
             // start challenge and roundtrip the return URL
             var props = new AuthenticationProperties
             {
-                RedirectUri = returnUrl, 
+                RedirectUri = returnUrl,
                 Items = { { "scheme", provider } }
             };
             return new ChallengeResult(provider, props);
@@ -287,16 +283,17 @@ namespace IdentityServer4.Quickstart.UI.Controllers
                     PhoneNumber = model.User.PhoneNumber,
                     SecurityNumber = model.User.SecurityNumber
                 };
-                var result = await _userManager.CreateAsync(user, model.Password);
+                var result = await this._userManager.CreateAsync(user, model.Password);
                 if (result.Errors.Count() > 0)
                 {
-                    AddErrors(result);
+                    this.AddErrors(result);
                     // If we got this far, something failed, redisplay form
                     return View(model);
                 }
             }
 
-            if (returnUrl != null) {
+            if (returnUrl != null)
+            {
                 if (HttpContext.User.Identity.IsAuthenticated)
                     return Redirect(returnUrl);
                 else
@@ -307,17 +304,6 @@ namespace IdentityServer4.Quickstart.UI.Controllers
             }
 
             return RedirectToAction("index", "home");
-        }
-
-        //
-        // POST: /Account/Logout
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> LogOff()
-        {
-            await _signInManager.SignOutAsync();
-            _logger.LogInformation(4, "User logged out.");
-            return RedirectToAction(nameof(HomeController.Index), "Home");
         }
 
         [HttpGet]
