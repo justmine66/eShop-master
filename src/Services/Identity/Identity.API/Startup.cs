@@ -34,8 +34,11 @@ namespace Identity.API
         {
             // Add framework services.
             services
-                .AddDbContext<ApplicationDbContext>(options => 
-                    options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")))
+                .AddDbContext<ApplicationDbContext>(options =>
+                    options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"), sqlOptions =>
+                    {
+                        sqlOptions.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
+                    }))
                 .AddDbContext<PersistedGrantDbContext>(options =>
                     options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"), sqlOptions =>
                     {
@@ -57,7 +60,7 @@ namespace Identity.API
             services.Configure<AppSettings>(Configuration);
 
             services.AddMvc();
-
+            
             if (Configuration.GetValue<string>("IsClusterEnv") == bool.TrueString)
             {
                 services.AddDataProtection(opts =>
