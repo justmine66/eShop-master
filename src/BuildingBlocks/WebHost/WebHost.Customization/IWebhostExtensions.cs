@@ -23,8 +23,8 @@ namespace Microsoft.AspNetCore.Hosting
                 {
                     logger.LogInformation($"正在迁移数据库，关联上下文{typeof(TContext)}");
 
-                    context.Database
-                        .Migrate();
+                    context.Database.Migrate();
+
                     seeder(context, services);
 
                     logger.LogInformation($"已经迁移数据库，关联上下文{typeof(TContext)}");

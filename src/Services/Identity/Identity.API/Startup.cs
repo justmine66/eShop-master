@@ -1,7 +1,6 @@
 ﻿using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,16 +12,11 @@ using BuildingBlocks.DataProtection;
 using Microsoft.Extensions.HealthChecks;
 using System.Reflection;
 using IdentityServer4.Services;
-using System.Threading.Tasks;
-using Identity.API.Configuration;
-using IdentityServer4.EntityFramework.Mappers;
-using System.Collections.Generic;
-using IdentityServer4.EntityFramework.DbContexts;
-using System.Linq;
 using Microsoft.AspNetCore.Identity;
 using Identity.API.Certificates;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using IdentityServer4.EntityFramework.DbContexts;
 
 namespace Identity.API
 {
@@ -39,8 +33,21 @@ namespace Identity.API
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {
             // Add framework services.
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+            services
+                .AddDbContext<ApplicationDbContext>(options => 
+                    options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")))
+                .AddDbContext<PersistedGrantDbContext>(options =>
+                    options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"), sqlOptions =>
+                    {
+                        sqlOptions.MigrationsAssembly(typeof(Startup).GetTypeInfo().Assembly.GetName().Name);
+                        sqlOptions.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
+                    }))
+                .AddDbContext<ConfigurationDbContext>(options =>
+                    options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"), sqlOptions =>
+                    {
+                        sqlOptions.MigrationsAssembly(typeof(Startup).GetTypeInfo().Assembly.GetName().Name);
+                        sqlOptions.EnableRetryOnFailure(maxRetryCount: 5, maxRetryDelay: TimeSpan.FromSeconds(30), errorNumbersToAdd: null);
+                    }));
 
             services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
