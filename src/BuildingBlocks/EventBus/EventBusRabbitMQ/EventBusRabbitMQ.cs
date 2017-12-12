@@ -33,8 +33,9 @@ namespace EventBusRabbitMQ
         private readonly IRabbitMQPersistentConnection _persistentConnection;//持久连接器
         private readonly ILogger<EventBusRabbitMQ> _logger;//日志记录器
         private readonly IEventBusSubscriptionsManager _subsManager;//事件总线订阅管理器
-        private readonly ILifetimeScope _autofac;
-        private readonly string AUTOFAC_SCOPE_NAME = "eshop_event_bus";
+        private readonly ILifetimeScope _autofac;//_autofac作用域
+        private readonly string AUTOFAC_SCOPE_NAME = "eshop_event_bus";//_autofac作用域名称
+        private readonly int _retryCount;//重试次数
 
         private IModel _consumerChannel;//信道
         private string _queueName;//队列名称
@@ -42,7 +43,8 @@ namespace EventBusRabbitMQ
         public EventBusRabbitMQ(IRabbitMQPersistentConnection persistentConnection,
             ILogger<EventBusRabbitMQ> logger,
             ILifetimeScope autofac,
-            IEventBusSubscriptionsManager subsManager)
+            IEventBusSubscriptionsManager subsManager,
+            int retryCount = 5)
         {
             _persistentConnection = persistentConnection ??
                 throw new ArgumentNullException(nameof(persistentConnection));//Rabbit持久连接器
@@ -54,6 +56,8 @@ namespace EventBusRabbitMQ
             _autofac = autofac;
 
             _subsManager.OnEventRemoved += SubsManager_OnEventRemoved;//注册移除事件回调。
+
+            this._retryCount = retryCount;
         }
 
         /// <summary>
@@ -120,7 +124,7 @@ namespace EventBusRabbitMQ
             //2、声明事件发布重试策略，处理瞬时或不确定移除导致失败的情况。
             var policy = RetryPolicy.Handle<BrokerUnreachableException>()
                 .Or<SocketException>()
-                .WaitAndRetry(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
+                .WaitAndRetry(this._retryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
                 {
                     _logger.LogWarning(ex.ToString());
                 });
@@ -215,7 +219,7 @@ namespace EventBusRabbitMQ
             };
             //3.2 启动消费
             channel.BasicConsume(queue: _queueName,
-                                 noAck: true,
+                                 autoAck: true,
                                  consumer: consumer);
             //3.3 异常回调处理
             channel.CallbackException += (sender, ea) =>

@@ -8,6 +8,7 @@ using EventBus.Events;
 using IntegrationEventLogEF.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace IntegrationEventLogEF.Services
 {

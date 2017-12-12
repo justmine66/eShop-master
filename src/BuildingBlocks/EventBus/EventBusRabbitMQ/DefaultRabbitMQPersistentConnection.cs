@@ -20,6 +20,7 @@ namespace EventBusRabbitMQ
     {
         private readonly IConnectionFactory _connectionFactory;//连接工厂
         private readonly ILogger<DefaultRabbitMQPersistentConnection> _logger;//日志记录器
+        private readonly int _retryCount;//重试次数
 
         IConnection _connection;//连接服务
         bool _disposed;//是否释放
@@ -31,10 +32,14 @@ namespace EventBusRabbitMQ
         /// </summary>
         /// <param name="connectionFactory">连接工厂</param>
         /// <param name="logger">日志记录器</param>
-        public DefaultRabbitMQPersistentConnection(IConnectionFactory connectionFactory, ILogger<DefaultRabbitMQPersistentConnection> logger)
+        public DefaultRabbitMQPersistentConnection(
+            IConnectionFactory connectionFactory,
+            ILogger<DefaultRabbitMQPersistentConnection> logger,
+            int retryCount = 5)
         {
-            _connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this._connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
+            this._logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            this._retryCount = retryCount;
         }
 
         /// <summary>
@@ -56,7 +61,7 @@ namespace EventBusRabbitMQ
         {
             if (!IsConnected)
             {
-                throw new InvalidOperationException("No RabbitMQ connections are available to perform this action");
+                throw new InvalidOperationException(Resources.NoRabbitMQConnections);
             }
 
             return _connection.CreateModel();
@@ -90,7 +95,7 @@ namespace EventBusRabbitMQ
                 //1、初始化重试策略
                 var policy = RetryPolicy.Handle<SocketException>()
                     .Or<BrokerUnreachableException>()
-                    .WaitAndRetry(5, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
+                    .WaitAndRetry(this._retryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
                     {
                         _logger.LogWarning(ex.ToString());
                     }
