@@ -6,6 +6,8 @@ using Locations.Api.Models;
 using Locations.Api.ViewModels;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using MongoDB.Driver.GeoJsonObjectModel;
+using MongoDB.Bson;
 
 namespace Locations.Api.Infrastructure.Respositorys
 {
@@ -18,9 +20,9 @@ namespace Locations.Api.Infrastructure.Respositorys
             _context = new LocationsContext(settings);
         }
 
-        public Task AddUserLocationAsync(UserLocation location)
+        public async Task AddUserLocationAsync(UserLocation location)
         {
-            throw new NotImplementedException();
+            await _context.UserLocation.InsertOneAsync(location);
         }
 
         public async Task<Models.Locations> GetAsync(int locationId)
@@ -31,24 +33,34 @@ namespace Locations.Api.Infrastructure.Respositorys
                                       .FirstOrDefaultAsync();
         }
 
-        public Task<List<Models.Locations>> GetCurrentUserRegionsListAsync(LocationRequest currentPosition)
+        public async Task<List<Models.Locations>> GetCurrentUserRegionsListAsync(LocationRequest currentPosition)
         {
-            throw new NotImplementedException();
+            var point = GeoJson.Point(GeoJson.Geographic(currentPosition.Longitude, currentPosition.Latitude));
+            var orderByDistanceQuery = new FilterDefinitionBuilder<Models.Locations>().Near(x => x.Location, point);
+            var withinAreaQuery = new FilterDefinitionBuilder<Models.Locations>().GeoIntersects("Polygon", point);
+            var filter = Builders<Models.Locations>.Filter.And(orderByDistanceQuery, withinAreaQuery);
+            return await _context.Locations.Find(filter).ToListAsync();
         }
 
-        public Task<List<Models.Locations>> GetLocationListAsync()
+        public async Task<List<Models.Locations>> GetLocationListAsync()
         {
-            throw new NotImplementedException();
+            return await _context.Locations.Find(new BsonDocument()).ToListAsync();
         }
 
-        public Task<UserLocation> GetUserLocationAsync(string userId)
+        public async Task<UserLocation> GetUserLocationAsync(string userId)
         {
-            throw new NotImplementedException();
+            var filter = Builders<UserLocation>.Filter.Eq("UserId", userId);
+            return await _context.UserLocation
+                                 .Find(filter)
+                                 .FirstOrDefaultAsync();
         }
 
-        public Task UpdateUserLocationAsync(UserLocation userLocation)
+        public async Task UpdateUserLocationAsync(UserLocation userLocation)
         {
-            throw new NotImplementedException();
+            await _context.UserLocation.ReplaceOneAsync(
+                doc => doc.UserId == userLocation.UserId,
+                userLocation,
+                new UpdateOptions { IsUpsert = true });
         }
     }
 }
