@@ -19,7 +19,20 @@ namespace Locations.Api
 
         public static IWebHost BuildWebHost(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
+                .UseHealthChecks("/hc")
+                .UseContentRoot(Directory.GetCurrentDirectory())
                 .UseStartup<Startup>()
+                .ConfigureAppConfiguration((builderContext, config) =>
+                {
+                    config.AddEnvironmentVariables();
+                })
+                .ConfigureLogging((hostingContext, builder) =>
+                {
+                    builder.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+                    builder.AddConsole();
+                    builder.AddDebug();
+                })
+                .UseApplicationInsights()
                 .Build();
     }
 }
