@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27004.2002
+VisualStudioVersion = 15.0.27130.2003
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{F83F32DD-A104-432F-8CD4-236AC9D02ACA}"
 EndProject
@@ -65,7 +65,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Payment.API", "src\Services
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Location", "Location", "{93D31284-7865-4857-B9A4-982802BFB0AC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Locations.Api", "src\Services\Location\Locations.Api\Locations.Api.csproj", "{B22EA836-ECC6-4925-AE19-A60B935DF81C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Locations.Api", "src\Services\Location\Locations.Api\Locations.Api.csproj", "{B22EA836-ECC6-4925-AE19-A60B935DF81C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Basket", "Basket", "{5A2AD1B8-F000-4275-BFAE-79DE8DEF840E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Basket.API", "src\Services\Basket\Basket.API\Basket.API.csproj", "{9BD2785F-677F-418E-9706-BCD3B4489514}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -145,6 +149,10 @@ Global
 		{B22EA836-ECC6-4925-AE19-A60B935DF81C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B22EA836-ECC6-4925-AE19-A60B935DF81C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B22EA836-ECC6-4925-AE19-A60B935DF81C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9BD2785F-677F-418E-9706-BCD3B4489514}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9BD2785F-677F-418E-9706-BCD3B4489514}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9BD2785F-677F-418E-9706-BCD3B4489514}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9BD2785F-677F-418E-9706-BCD3B4489514}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -180,6 +188,8 @@ Global
 		{522B156B-9580-41E5-9C16-C0C5BCD67E76} = {8597974F-2D3C-4D7C-8E9E-1796ACA345C1}
 		{93D31284-7865-4857-B9A4-982802BFB0AC} = {FBA7408C-5162-40F7-A00B-93BA47F656DF}
 		{B22EA836-ECC6-4925-AE19-A60B935DF81C} = {93D31284-7865-4857-B9A4-982802BFB0AC}
+		{5A2AD1B8-F000-4275-BFAE-79DE8DEF840E} = {FBA7408C-5162-40F7-A00B-93BA47F656DF}
+		{9BD2785F-677F-418E-9706-BCD3B4489514} = {5A2AD1B8-F000-4275-BFAE-79DE8DEF840E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {EA3A6B23-F87C-4DE7-A184-DABF5DC096A8}
