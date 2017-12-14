@@ -22,7 +22,7 @@ namespace Payment.API.IntegrationEvents.EventHandling
             this._settings = settings.CurrentValue;
         }
 
-        public async Task Handle(OrderStatusChangedToStockConfirmedIntegrationEvent @event)
+        public async Task HandleAsync(OrderStatusChangedToStockConfirmedIntegrationEvent @event)
         {
             IntegrationEvent orderPaymentIntegrationEvent;
 

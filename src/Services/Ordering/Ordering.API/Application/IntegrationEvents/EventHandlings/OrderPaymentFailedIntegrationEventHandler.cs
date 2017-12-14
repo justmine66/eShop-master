@@ -21,7 +21,7 @@ namespace Ordering.API.Application.IntegrationEvents.EventHandlings
             this._orderRepository = orderRepository;
         }
 
-        public async Task Handle(OrderPaymentFailedIntegrationEvent @event)
+        public async Task HandleAsync(OrderPaymentFailedIntegrationEvent @event)
         {
             var orderToUpdate = await this._orderRepository.GetAsync(@event.OrderId);
             orderToUpdate.SetCancelledStatus();

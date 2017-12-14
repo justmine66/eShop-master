@@ -20,7 +20,7 @@ namespace Ordering.API.Application.IntegrationEvents.EventHandlings
             this._orderRepository = orderRepository;
         }
 
-        public async Task Handle(OrderStockRejectedIntegrationEvent @event)
+        public async Task HandleAsync(OrderStockRejectedIntegrationEvent @event)
         {
             var orderToUpdate = await _orderRepository.GetAsync(@event.OrderId);
 

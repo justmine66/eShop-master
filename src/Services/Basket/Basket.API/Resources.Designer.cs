@@ -59,5 +59,14 @@ namespace Basket.API {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   查找类似 Invalid number of units 的本地化字符串。
+        /// </summary>
+        internal static string BasketItem_ValidNumbersOfQuantityMustGreaterThanOne {
+            get {
+                return ResourceManager.GetString("BasketItem_ValidNumbersOfQuantityMustGreaterThanOne", resourceCulture);
+            }
+        }
     }
 }

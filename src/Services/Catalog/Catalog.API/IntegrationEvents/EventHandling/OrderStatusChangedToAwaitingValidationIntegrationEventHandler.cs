@@ -25,7 +25,7 @@ namespace Catalog.API.IntegrationEvents.EventHandling
             _catalogIntegrationEventService = catalogIntegrationEventService;
         }
 
-        public async Task Handle(OrderStatusChangedToAwaitingValidationIntegrationEvent @event)
+        public async Task HandleAsync(OrderStatusChangedToAwaitingValidationIntegrationEvent @event)
         {
             var confirmedOrderStockItems = new List<ConfirmedOrderStockItem>();
             foreach (var orderStockItem in @event.OrderStockItems)

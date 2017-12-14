@@ -19,7 +19,7 @@ namespace Catalog.API.IntegrationEvents.EventHandling
             _catalogContext = catalogContext;
         }
 
-        public async Task Handle(OrderStatusChangedToPaidIntegrationEvent @event)
+        public async Task HandleAsync(OrderStatusChangedToPaidIntegrationEvent @event)
         {
             foreach (var orderStockItem in @event.OrderStockItems)
             {

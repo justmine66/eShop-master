@@ -36,7 +36,7 @@ namespace Ordering.API.Application.IntegrationEvents.EventHandlings
         /// order items.
         /// </param>
         /// <returns></returns>
-        public async Task Handle(UserCheckoutAcceptedIntegrationEvent eventMsg)
+        public async Task HandleAsync(UserCheckoutAcceptedIntegrationEvent eventMsg)
         {
             var result = false;
 

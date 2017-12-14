@@ -20,7 +20,7 @@ namespace Ordering.API.Application.IntegrationEvents.EventHandlings
             this._orderRepository = orderRepository;
         }
 
-        public async Task Handle(GracePeriodConfirmedIntegrationEvent @event)
+        public async Task HandleAsync(GracePeriodConfirmedIntegrationEvent @event)
         {
             var orderToUpdate = await this._orderRepository.GetAsync(@event.OrderId);
             orderToUpdate.SetAwaitingValidationStatus();

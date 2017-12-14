@@ -21,7 +21,7 @@ namespace Ordering.API.Application.IntegrationEvents.EventHandlings
             this._orderRepository = orderRepository;
         }
 
-        public async Task Handle(OrderPaymentSuccededIntegrationEvent @event)
+        public async Task HandleAsync(OrderPaymentSuccededIntegrationEvent @event)
         {
             var orderToUpdate = await _orderRepository.GetAsync(@event.OrderId);
 
