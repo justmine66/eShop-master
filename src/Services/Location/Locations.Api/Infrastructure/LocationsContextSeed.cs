@@ -22,7 +22,7 @@ namespace Locations.Api.Infrastructure
 
             ctx = new LocationsContext(config);
 
-            if (!ctx.Locations.Database.GetCollection<Models.Locations>(nameof(Models.Locations)).AsQueryable().Any())
+            if (!ctx.Locations.Database.GetCollection<Models.Locations>("Locations").AsQueryable().Any())
             {
                 await SetIndexes();
                 await SetNorthAmerica();

@@ -1,4 +1,5 @@
 {
+  "profiles": {
     "Locations.Api": {
       "commandName": "Project",
       "launchBrowser": true,
