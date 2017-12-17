@@ -28,36 +28,37 @@ namespace EventBusRabbitMQ
     /// </summary>
     public class EventBusRabbitMQ : IEventBus, IDisposable
     {
-        const string BROKER_NAME = "eshop_event_bus";//消息代理名称
+        const string BROKER_NAME = "eshop_event_bus";//消息代理者名称
 
         private readonly IRabbitMQPersistentConnection _persistentConnection;//持久连接器
         private readonly ILogger<EventBusRabbitMQ> _logger;//日志记录器
         private readonly IEventBusSubscriptionsManager _subsManager;//事件总线订阅管理器
         private readonly ILifetimeScope _autofac;//_autofac作用域
         private readonly string AUTOFAC_SCOPE_NAME = "eshop_event_bus";//_autofac作用域名称
-        private readonly int _retryCount;//重试次数
+        private readonly int _retryCount;//重试次数，平滑处理rabbitMQ发布事件部分失败。
 
-        private IModel _consumerChannel;//信道
+        private IModel _consumerChannel;//消息消费信道
         private string _queueName;//队列名称
 
         public EventBusRabbitMQ(IRabbitMQPersistentConnection persistentConnection,
             ILogger<EventBusRabbitMQ> logger,
             ILifetimeScope autofac,
             IEventBusSubscriptionsManager subsManager,
+            string queueName = null,
             int retryCount = 5)
         {
-            _persistentConnection = persistentConnection ??
+            this._persistentConnection = persistentConnection ??
                 throw new ArgumentNullException(nameof(persistentConnection));//Rabbit持久连接器
-            _logger = logger ??
+            this._logger = logger ??
                 throw new ArgumentNullException(nameof(logger));//日志记录器
-            _subsManager = subsManager ??
+            this._subsManager = subsManager ??
                 new InMemoryEventBusSubscriptionsManager();//订阅管理器
-            _consumerChannel = CreateConsumerChannel();//创建实时消费信道。
-            _autofac = autofac;
+            this._consumerChannel = CreateConsumerChannel();//创建实时消费信道。
+            this._autofac = autofac;//_autofac作用域
+            this._queueName = queueName;//订阅方名称
+            this._subsManager.OnEventRemoved += this.SubsManager_OnEventRemoved;//注册移除事件回调。
 
-            _subsManager.OnEventRemoved += SubsManager_OnEventRemoved;//注册移除事件回调。
-
-            this._retryCount = retryCount;
+            this._retryCount = retryCount;//重试次数
         }
 
         /// <summary>
@@ -69,11 +70,11 @@ namespace EventBusRabbitMQ
             where T : IntegrationEvent
             where TH : IIntegrationEventHandler<T>
         {
-            var eventName = _subsManager.GetEventKey<T>();
+            var eventName = this._subsManager.GetEventKey<T>();
             //1、建立消息队列通信机制
             this.DoInternalSubscription(eventName);
             //2、添加订阅
-            _subsManager.AddSubscription<T, TH>();
+            this._subsManager.AddSubscription<T, TH>();
         }
 
         /// <summary>
@@ -108,7 +109,7 @@ namespace EventBusRabbitMQ
             where TH : IIntegrationEventHandler<T>
             where T : IntegrationEvent
         {
-            _subsManager.RemoveSubscription<T, TH>();
+            this._subsManager.RemoveSubscription<T, TH>();
         }
 
         /// <summary>
@@ -118,24 +119,22 @@ namespace EventBusRabbitMQ
         public void Publish(IntegrationEvent @event)
         {
             //1、保证连接是否有效
-            if (!_persistentConnection.IsConnected)
-                _persistentConnection.TryConnect();
+            if (!this._persistentConnection.IsConnected)
+                this._persistentConnection.TryConnect();
 
-            //2、声明事件发布重试策略，处理瞬时或不确定移除导致失败的情况。
-            var policy = RetryPolicy.Handle<BrokerUnreachableException>()
+            //2、声明事件发布重试策略(指数退避算法)，处理瞬时或不确定移除导致失败的情况。
+            RetryPolicy policy = RetryPolicy.Handle<BrokerUnreachableException>()
                 .Or<SocketException>()
                 .WaitAndRetry(this._retryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
                 {
-                    _logger.LogWarning(ex.ToString());
+                    this._logger.LogWarning(ex.ToString());
                 });
             //3、发布事件到消息队列
-            using (var channel = _persistentConnection.CreateModel())//创建信道
+            using (IModel channel = _persistentConnection.CreateModel())//创建信道
             {
-                var eventName = @event.GetType()
-                    .Name;//事件名称
+                var eventName = @event.GetType().Name;//事件名称
+                channel.ExchangeDeclare(exchange: BROKER_NAME, type: "direct");//申明交换机
 
-                channel.ExchangeDeclare(exchange: BROKER_NAME,
-                                    type: "direct");//申明交换机
                 //将事件对象序列化成（RabbitMQ能传递的）二进制块。
                 var message = JsonConvert.SerializeObject(@event);
                 var body = Encoding.UTF8.GetBytes(message);
@@ -169,7 +168,6 @@ namespace EventBusRabbitMQ
                 }
             }
         }
-
         private static Func<IIntegrationEventHandler> FindHandlerByType(Type handlerType, IEnumerable<Func<IIntegrationEventHandler>> handlers)
         {
             foreach (var func in handlers)
@@ -206,7 +204,11 @@ namespace EventBusRabbitMQ
             channel.ExchangeDeclare(exchange: BROKER_NAME,
                                  type: "direct");
             //2.2 声明消息队列
-            _queueName = channel.QueueDeclare().QueueName;
+            channel.QueueDeclare(queue: this._queueName,
+                durable: true,
+                exclusive: true,
+                autoDelete: false,
+                arguments: null);
             //3、建立消费机制
             //3.1 初始化消费实例
             var consumer = new EventingBasicConsumer(channel);
@@ -219,13 +221,13 @@ namespace EventBusRabbitMQ
             };
             //3.2 启动消费
             channel.BasicConsume(queue: _queueName,
-                                 autoAck: true,
+                                 autoAck: false,
                                  consumer: consumer);
             //3.3 异常回调处理
             channel.CallbackException += (sender, ea) =>
             {
-                _consumerChannel.Dispose();
-                _consumerChannel = CreateConsumerChannel();
+                this._consumerChannel.Dispose();
+                this._consumerChannel = this.CreateConsumerChannel();
             };
 
             return channel;
@@ -263,21 +265,21 @@ namespace EventBusRabbitMQ
         private void SubsManager_OnEventRemoved(object sender, string eventName)
         {
             //1、保证RabbitMQ已连接
-            if (!_persistentConnection.IsConnected)
+            if (!this._persistentConnection.IsConnected)
             {
-                _persistentConnection.TryConnect();
+                this._persistentConnection.TryConnect();
             }
             //2、建立从交换机绑定消息机制
-            using (var channel = _persistentConnection.CreateModel())//创建通道
+            using (var channel = this._persistentConnection.CreateModel())//创建通道
             {
                 channel.QueueUnbind(queue: _queueName,
                     exchange: BROKER_NAME,
-                    routingKey: eventName);//根据路由规则(事件名称)，从交换机绑定队列消息。
+                    routingKey: eventName);//根据路由规则(事件名称)，从交换机解绑定队列。
                 //订阅管理器，是否清空判断。
-                if (_subsManager.IsEmpty)
+                if (this._subsManager.IsEmpty)
                 {
-                    _queueName = string.Empty;
-                    _consumerChannel.Close();
+                    this._queueName = string.Empty;
+                    this._consumerChannel.Close();
                 }
             }
         }
