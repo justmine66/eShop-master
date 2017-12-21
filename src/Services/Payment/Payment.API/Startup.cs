@@ -82,6 +82,8 @@ namespace Payment.API
 
         private void RegisterEventBus(IServiceCollection services)
         {
+            var subscriptionClientName = Configuration["SubscriptionClientName"];
+
             services.AddSingleton<IEventBus, EventBusRabbitMQ.EventBusRabbitMQ>(provider =>
             {
                 var connection = provider.GetRequiredService<IRabbitMQPersistentConnection>();
@@ -95,7 +97,7 @@ namespace Payment.API
                     retryCount = int.Parse(Configuration["EventBusRetryCount"]);
                 }
 
-                return new EventBusRabbitMQ.EventBusRabbitMQ(connection, logger, scope, subManager, retryCount);
+                return new EventBusRabbitMQ.EventBusRabbitMQ(connection, logger, scope, subManager, subscriptionClientName, retryCount);
             });
         }
         private void ConfigureEventBus(IApplicationBuilder app)

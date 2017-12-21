@@ -18,11 +18,12 @@ namespace Ordering.Domain.SeedWork
         /// <returns>是否相等</returns>
         protected static bool EqualOperator(ValueObject left, ValueObject right)
         {
-            if (object.ReferenceEquals(left, null) ^ object.ReferenceEquals(right, null))
+            if (left is null ^ right is null)
             {
                 return false;
             }
-            return ReferenceEquals(left, null) || left.Equals(right);
+            //到这里要么两个都为Null，要么都不为Null
+            return left is null || left.Equals(right);
         }
 
         /// <summary>
@@ -37,47 +38,41 @@ namespace Ordering.Domain.SeedWork
         }
 
         /// <summary>
-        /// 获取值对象下所有原子项组成的集合
+        /// 在派生类中重写时，返回能够表示身份相等的所有组件。
         /// </summary>
         /// <returns></returns>
-        protected abstract IEnumerable<object> GetAtomicValues();
+        protected abstract IEnumerable<object> GetEqualityComponents();
 
         /// <summary>
-        /// 等于,所有原子项值相等代表两个值对象相等.
+        /// 是否相等
         /// </summary>
-        /// <param name="obj">值对象</param>
+        /// <param name="obj">其他值对象</param>
         /// <returns></returns>
         public override bool Equals(object obj)
         {
-            if (obj == null || obj.GetType() != this.GetType())
-                return false;
+            if (object.ReferenceEquals(this, obj)) return true;
+            if (object.ReferenceEquals(null, obj)) return false;
+            if (obj.GetType() != this.GetType()) return false;
 
             var other = obj as ValueObject;
-            IEnumerator<object> thisValues = this.GetAtomicValues().GetEnumerator();
-            IEnumerator<object> otherValues = other.GetAtomicValues().GetEnumerator();
-            while (thisValues.MoveNext() && otherValues.MoveNext())
-            {
-                //001 如果同一位置存在原子值都为空的情况,则不相等.
-                if (ReferenceEquals(thisValues.Current, null) ^ ReferenceEquals(otherValues.Current, null))
-                {
-                    return false;
-                }
-                //002 判断原子值是否相等
-                if (thisValues.Current != null && !thisValues.Current.Equals(otherValues.Current))
-                {
-                    return false;
-                }
-            }
-            return !thisValues.MoveNext() && !otherValues.MoveNext();
+            return other.GetEqualityComponents().SequenceEqual(this.GetEqualityComponents());
         }
 
+        /// <summary>
+        /// 获取哈希码
+        /// </summary>
+        /// <returns></returns>
         public override int GetHashCode()
         {
-            return this.GetAtomicValues()
+            return this.GetEqualityComponents()
                 .Select(x => x != null ? x.GetHashCode() : 0)
                 .Aggregate((x, y) => x ^ y);
         }
 
+        /// <summary>
+        /// 获取浅副本
+        /// </summary>
+        /// <returns></returns>
         public ValueObject GetCopy()
         {
             return this.MemberwiseClone() as ValueObject;

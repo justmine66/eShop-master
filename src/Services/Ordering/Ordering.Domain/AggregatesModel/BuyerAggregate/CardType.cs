@@ -13,27 +13,40 @@ namespace Ordering.Domain.AggregatesModel.BuyerAggregate
     public class CardType
         : Enumeration
     {
+        #region [ 私有字段和构造函数重载 ]
+
+        protected CardType() { }
+        public CardType(int id, string name)
+            : base(id, name) { }
+
+        #endregion
+
+        #region [ 公共属性 ]
+
         /// <summary>
         /// 银联
         /// </summary>
         public static CardType unionPlay = new CardType(1, "unionPlay");
+
         /// <summary>
         /// 支付宝
         /// </summary>
         public static CardType aPlay = new CardType(2, "APlay");
+
         /// <summary>
         /// 微信
         /// </summary>
         public static CardType weChat = new CardType(3, "WeChat");
+
         /// <summary>
         /// 银行卡类型列表
         /// </summary>
         /// <returns></returns>
         public static IEnumerable<CardType> List() => new[] { unionPlay, aPlay, weChat };
 
-        protected CardType() { }
-        public CardType(int id, string name)
-            : base(id, name) { }
+        #endregion
+
+        #region [ 命令方法 ]
 
         /// <summary>
         /// 根据名称获取银行卡类型
@@ -51,6 +64,7 @@ namespace Ordering.Domain.AggregatesModel.BuyerAggregate
 
             return state;
         }
+
         /// <summary>
         /// 根据标识获取银行卡类型
         /// </summary>
@@ -67,5 +81,7 @@ namespace Ordering.Domain.AggregatesModel.BuyerAggregate
 
             return state;
         }
+
+        #endregion
     }
 }

@@ -28,6 +28,7 @@ using Catalog.API.IntegrationEvents.EventHandling;
 using Catalog.API.IntegrationEvents.Events;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace Catalog.API
 {
