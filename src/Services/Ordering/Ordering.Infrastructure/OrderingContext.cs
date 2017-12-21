@@ -23,13 +23,43 @@ namespace Ordering.Infrastructure
     {
         public const string DEFAULT_SCHEMA = "ordering";//订单子域--数据库默认架构
 
+        #region [ 订单聚合 ]
+
+        /// <summary>
+        /// 订单表
+        /// </summary>
         public DbSet<Order> Orders { get; set; }
+
+        /// <summary>
+        /// 订单明细项表
+        /// </summary>
         public DbSet<OrderItem> OrderItems { get; set; }
+
+        /// <summary>
+        /// 订单状态表
+        /// </summary>
         public DbSet<OrderStatus> OrderStatus { get; set; }
 
+        #endregion
+
+        #region [ 买家聚合 ]
+
+        /// <summary>
+        /// 买家表
+        /// </summary>
         public DbSet<Buyer> Buyers { get; set; }
+
+        /// <summary>
+        /// 付款方式表
+        /// </summary>
         public DbSet<PaymentMethod> Payments { get; set; }
+
+        /// <summary>
+        /// 银行卡类型表
+        /// </summary>
         public DbSet<CardType> CardTypes { get; set; }
+
+        #endregion
 
         private readonly IMediator _mediator;
         public OrderingContext(DbContextOptions<OrderingContext> options) : base(options) { }
@@ -69,12 +99,10 @@ namespace Ordering.Infrastructure
             //002 发布领域事件
             if (result > 0)
             {
-                //最终一致性补偿机制还未实现。。。。。。
                 await this._mediator.DispatchDomainEventAsync(this);
             }
 
             return true;
         }
-
     }
 }

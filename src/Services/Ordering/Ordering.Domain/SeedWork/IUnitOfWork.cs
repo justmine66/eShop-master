@@ -12,14 +12,14 @@ namespace Ordering.Domain.SeedWork
     public interface IUnitOfWork : IDisposable
     {
         /// <summary>
-        /// 异步保存变化
+        /// 持久化保存所有改变
         /// </summary>
         /// <param name="cancellationToken">取消令牌</param>
         /// <returns></returns>
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
-        /// 保存所有实体
+        /// 保存所有实体（包括持久化和发布领域事件）
         /// </summary>
         /// <param name="cancellationToken">取消令牌</param>
         /// <returns></returns>
