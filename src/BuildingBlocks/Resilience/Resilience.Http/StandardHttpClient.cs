@@ -11,6 +11,9 @@ using System.Threading.Tasks;
 
 namespace Resilience.Http
 {
+    /// <summary>
+    /// 标准 HttpClient
+    /// </summary>
     public class StandardHttpClient : IHttpClient
     {
         readonly HttpClient _httpClient;
